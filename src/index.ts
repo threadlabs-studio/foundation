@@ -15,3 +15,4 @@ export * from './templates/index.js';
 export * from './engine/audit.js';
 export * from './engine/apply.js';
 export * from './engine/plan.js';
+export type { CommandResult } from './commands/types.js';
