@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://threadlabs.dev/schemas/evidence.schema.json",
+  "title": "Threadlabs verification evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "standardVersion",
+    "revision",
+    "dirtyFingerprint",
+    "lane",
+    "state",
+    "observedAt",
+    "checks",
+    "externalEvidence",
+    "skippedControls",
+    "remainingHumanJudgment"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "standardVersion": { "type": "string" },
+    "revision": { "type": "string" },
+    "dirtyFingerprint": { "type": "string" },
+    "lane": { "enum": ["inner", "pr", "extended", "scheduled", "release"] },
+    "state": { "enum": ["passed", "partial", "failed", "canceled", "unknown"] },
+    "observedAt": { "type": "string", "format": "date-time" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["controlId", "state"],
+        "properties": {
+          "controlId": { "type": "string" },
+          "command": { "type": "array", "items": { "type": "string" } },
+          "state": { "enum": ["passed", "failed", "skipped", "canceled", "unknown"] },
+          "durationMs": { "type": "number", "minimum": 0 },
+          "details": { "type": "string" }
+        }
+      }
+    },
+    "externalEvidence": { "type": "array", "items": { "type": "object" } },
+    "skippedControls": { "type": "array", "items": { "type": "string" } },
+    "remainingHumanJudgment": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://threadlabs.dev/schemas/operation-plan.schema.json",
+  "title": "Threadlabs immutable operation plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "standardVersion",
+    "targetRoot",
+    "targetFingerprint",
+    "manifestDigest",
+    "lockDigest",
+    "stage",
+    "observations",
+    "localEffects",
+    "remoteEffects",
+    "postconditions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "standardVersion": { "type": "string", "minLength": 1 },
+    "targetRoot": { "const": "." },
+    "targetFingerprint": { "$ref": "#/$defs/digest" },
+    "manifestDigest": { "$ref": "#/$defs/digest" },
+    "lockDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "stage": { "type": "string", "minLength": 1 },
+    "observations": { "type": "array", "items": { "type": "object" } },
+    "localEffects": { "type": "array", "items": { "$ref": "#/$defs/localEffect" } },
+    "remoteEffects": { "type": "array", "items": { "$ref": "#/$defs/remoteEffect" } },
+    "postconditions": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "localEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scope",
+        "kind",
+        "path",
+        "content",
+        "expectedPreimage",
+        "postconditionDigest"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "scope": { "const": "local" },
+        "kind": { "const": "write-file" },
+        "path": { "type": "string" },
+        "content": { "type": "string" },
+        "expectedPreimage": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+        "postconditionDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "remoteEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scope", "kind", "repository", "setting", "expectedValue", "desiredValue"],
+      "properties": {
+        "id": { "type": "string" },
+        "scope": { "const": "remote" },
+        "kind": { "const": "github-setting" },
+        "repository": { "type": "string" },
+        "setting": { "type": "string" },
+        "expectedValue": {},
+        "desiredValue": {}
+      }
+    }
+  }
+}

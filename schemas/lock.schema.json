@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://threadlabs.dev/schemas/lock.schema.json",
+  "title": "Threadlabs generated lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "standardVersion", "modules", "artifacts"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "standardVersion": { "type": "string", "minLength": 1 },
+    "modules": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "artifacts": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*(?:^|/)\\.git(?:/|$)).+$"
+      },
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    }
+  }
+}
