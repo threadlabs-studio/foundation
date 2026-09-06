@@ -27,6 +27,11 @@ function redact(value: string): string {
     .replaceAll(home === undefined ? '\0unlikely-home\0' : home, '<home>');
 }
 
+function truncateUtf8(value: string, maxBytes: number): string {
+  const bytes = Buffer.from(value);
+  return bytes.byteLength <= maxBytes ? value : bytes.subarray(0, maxBytes).toString('utf8');
+}
+
 export function runBoundedCommand(
   executable: string,
   arguments_: readonly string[],
@@ -66,9 +71,9 @@ export function runBoundedCommand(
   });
   const rawOutput = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   const truncated = Buffer.byteLength(rawOutput) > maxOutputBytes;
-  const stdout = redact(String(result.stdout ?? '')).slice(0, maxOutputBytes);
+  const stdout = truncateUtf8(redact(String(result.stdout ?? '')), maxOutputBytes);
   const remaining = Math.max(0, maxOutputBytes - Buffer.byteLength(stdout));
-  const stderr = redact(String(result.stderr ?? '')).slice(0, remaining);
+  const stderr = truncateUtf8(redact(String(result.stderr ?? '')), remaining);
   const timedOut =
     result.error !== undefined && 'code' in result.error && result.error.code === 'ETIMEDOUT';
   return {

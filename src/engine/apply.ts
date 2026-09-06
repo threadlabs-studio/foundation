@@ -91,7 +91,6 @@ export function applyOperationPlan(
         postcondition: effect.postconditionDigest,
       });
       appliedEffects += 1;
-      options.afterEffect?.(effect, appliedEffects);
     } catch (error) {
       appendJournal(root, {
         runId,
@@ -103,6 +102,7 @@ export function applyOperationPlan(
       });
       throw error;
     }
+    options.afterEffect?.(effect, appliedEffects);
   }
   return { state: 'succeeded', appliedEffects, resumedEffects: succeeded.size };
 }

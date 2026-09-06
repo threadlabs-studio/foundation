@@ -109,14 +109,12 @@ export function runCli(arguments_: readonly string[], io: CliIo = processIo): nu
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown failure.';
+    const unavailable = /GitHub request failed|ENOENT|rate.?limit|unavailable/iu.test(message);
+    const blocked = /digest|preimage|fingerprint|symlink|ambiguous|drift/iu.test(message);
     result = {
       command,
-      status: /digest|preimage|fingerprint|symlink|ambiguous/iu.test(message)
-        ? 'blocked'
-        : 'invalid-input',
-      exitClass: /digest|preimage|fingerprint|symlink|ambiguous/iu.test(message)
-        ? 'staleOrConflict'
-        : 'invalidInput',
+      status: blocked ? 'blocked' : unavailable ? 'findings' : 'invalid-input',
+      exitClass: blocked ? 'staleOrConflict' : unavailable ? 'unavailableEvidence' : 'invalidInput',
       summary: message,
       data: { message },
     };

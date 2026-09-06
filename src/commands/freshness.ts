@@ -25,21 +25,25 @@ export function freshnessCommand(options: CommandOptions): CommandResult {
       sourceFailed = true;
     }
   }
-  const results: FreshnessResult[] = Object.entries(declared)
-    .map(([name, current]) => {
-      const observed = outdated[name];
-      return {
-        name,
-        result: classifyFreshness({
-          current: observed?.current ?? current,
-          ...(observed?.latest === undefined ? {} : { latest: observed.latest }),
-          ...(sourceFailed ? { failed: true } : observed === undefined ? { latest: current } : {}),
-        }),
-      };
-    })
-    .toSorted((left, right) => compareText(left.name, right.name))
-    .map(({ result }) => result);
-  const actionable = results.some((result) => result.state !== 'current');
+  const results: Array<{ readonly name: string; readonly result: FreshnessResult }> =
+    Object.entries(declared)
+      .map(([name, current]) => {
+        const observed = outdated[name];
+        return {
+          name,
+          result: classifyFreshness({
+            current: observed?.current ?? current,
+            ...(observed?.latest === undefined ? {} : { latest: observed.latest }),
+            ...(sourceFailed
+              ? { failed: true }
+              : observed === undefined
+                ? { latest: current }
+                : {}),
+          }),
+        };
+      })
+      .toSorted((left, right) => compareText(left.name, right.name));
+  const actionable = results.some(({ result }) => result.state !== 'current');
   return {
     command: 'freshness',
     status: actionable ? 'findings' : 'success',
