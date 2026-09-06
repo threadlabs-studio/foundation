@@ -1,5 +1,5 @@
 import { snapshotRepository, type RepositorySnapshot } from '../adapters/filesystem.js';
-import { compareText, digestCanonical } from '../domain/canonicalize.js';
+import { compareText } from '../domain/canonicalize.js';
 import type { ThreadlabsConfig, ThreadlabsLock } from '../domain/config.js';
 import type { Finding } from '../domain/finding.js';
 import type { ExternalEvidence, Observation } from '../domain/observation.js';
@@ -7,6 +7,7 @@ import { allBuiltInModules, getBuiltInModule, resolveSelection } from '../module
 import { inferModules } from './applicability.js';
 import { observationFromExternal } from './observe.js';
 import { buildAuditStages, type AuditStage } from './stages.js';
+import { hashContent } from './fingerprint.js';
 
 export interface AuditOptions {
   readonly config?: ThreadlabsConfig;
@@ -117,7 +118,7 @@ export function auditSnapshot(
         );
       } else {
         const lockedDigest = options.lock?.artifacts[artifact.path];
-        const actualDigest = digestCanonical(content);
+        const actualDigest = hashContent(content);
         if (managedPaths.has(artifact.path) && lockedDigest === actualDigest) {
           findings.push(
             finding(
