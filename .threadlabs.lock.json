@@ -2,9 +2,9 @@
   "artifacts": {
     ".gitattributes": "855fad671d82c5efee0bf10ccb8ce4d26c6ec93fa33af7f86362f515c6d0b38f",
     ".github/dependabot.yml": "4c835c01213d922e37a495e4c027c9fc5a37afe86939ac216d848f18750b19d2",
-    ".github/workflows/ci.yml": "29a464fbad4dc6d2367b7274f8165212fba6042410a38cce2b06a7a2afcc62df",
-    ".github/workflows/extended.yml": "b358c10993ea6426d37537448a69d8e98d379f4535a1af8899124c82077da09a",
-    ".github/workflows/release.yml": "b948a43e20984afa329ff81949ff0e3c5231068072e9efbdf102aed55349dc03",
+    ".github/workflows/ci.yml": "662f1b61e9d98094e97e7a4a53f48b62d9843bd85fc675e89d33edac26d66c1f",
+    ".github/workflows/extended.yml": "046f181920c3f87f003225c4ac7496bc8bf87aa49a68ad1b8c4a07e7bc5e6cae",
+    ".github/workflows/release.yml": "5f01ae8ffba35979a702166d2a5cee2525d0e6dc6e9199d97da2d47a1fcb2298",
     "LICENSE": "da71762cf01a96f08d8c167d2bf9a1de314783c50d00d865bdc353988988a62b",
     "scripts/release.mjs": "8014f3b8cea62f6898215215b62322e77004468be72668d89b20d1495a0c2286",
     "threadlabs.config.json": "67cd6e46db3fa4a72960eb3a65d8be717c845542f38b0b7fed5bf460c572c69b"

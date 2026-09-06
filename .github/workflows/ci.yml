@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           package-manager-cache: false
+      - run: npm install --global --ignore-scripts corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:pr

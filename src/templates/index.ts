@@ -244,6 +244,7 @@ jobs:
         with:
           node-version: \${{ matrix.node }}
           package-manager-cache: false
+      - run: npm install --global --ignore-scripts corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:pr
@@ -305,6 +306,7 @@ jobs:
           node-version: '24'
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
+      - run: npm install --global --ignore-scripts corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:release
@@ -336,6 +338,7 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - run: npm install --global --ignore-scripts corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:extended
