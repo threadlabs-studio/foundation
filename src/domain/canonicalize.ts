@@ -43,6 +43,10 @@ function normalize(value: unknown, parentKey?: string): unknown {
 }
 
 export function canonicalJson(value: unknown): string {
+  return `${JSON.stringify(normalize(value), null, 2)}\n`;
+}
+
+export function canonicalCompactJson(value: unknown): string {
   return `${JSON.stringify(normalize(value))}\n`;
 }
 

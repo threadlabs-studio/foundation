@@ -8,4 +8,11 @@ export const publicApiModule = defineModule({
   applicability: 'Libraries exposing imports or executable entry points.',
   expectedSeconds: 30,
   dependencies: ['core', 'typescript-node'],
+  artifacts: [
+    {
+      path: 'tests/package.test.ts',
+      ownership: 'managed',
+      template: 'public-api/package-test',
+    },
+  ],
 });

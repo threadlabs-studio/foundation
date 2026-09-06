@@ -22,7 +22,7 @@ function normalizedConfig(
     if (!ownership.has(path)) ownership.set(path, { path, mode: 'managed' });
   }
   for (const path of ['threadlabs.config.json', '.threadlabs.lock.json']) {
-    if (!ownership.has(path)) ownership.set(path, { path, mode: 'managed' });
+    ownership.set(path, { path, mode: 'managed' });
   }
   return {
     ...config,
@@ -64,6 +64,12 @@ export function createOperationPlan(
   }
 
   const manifest = normalizedConfig(config, [...desired.keys()]);
+  const ownership = new Map(manifest.ownership.map((grant) => [grant.path, grant.mode]));
+  for (const path of desired.keys()) {
+    const mode = ownership.get(path);
+    if (mode === 'local' || mode === 'unmanaged') desired.delete(path);
+    if (mode === 'ambiguous') throw new Error(`Ownership is ambiguous for artifact: ${path}`);
+  }
   const manifestContent = canonicalJson(manifest);
   desired.set('threadlabs.config.json', manifestContent);
   const lock: ThreadlabsLock = {
@@ -76,7 +82,6 @@ export function createOperationPlan(
   };
   desired.set('.threadlabs.lock.json', canonicalJson(lock));
 
-  const ownership = new Map(manifest.ownership.map((grant) => [grant.path, grant.mode]));
   const localEffects: LocalWriteEffect[] = [];
   for (const [path, content] of desired) {
     const existing = snapshot.files.get(path);
@@ -85,7 +90,10 @@ export function createOperationPlan(
     if (existing !== undefined) {
       const managed =
         ownership.get(path) === 'managed' || ownership.get(path) === 'section-managed';
-      const locked = currentLock?.artifacts[path];
+      const locked =
+        path === '.threadlabs.lock.json' && currentLock !== undefined
+          ? hashContent(canonicalJson(currentLock))
+          : currentLock?.artifacts[path];
       if (!managed || locked !== expectedPreimage) {
         throw new Error(`Ownership is ambiguous for existing path: ${path}`);
       }

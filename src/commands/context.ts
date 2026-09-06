@@ -35,6 +35,10 @@ export function contextFromConfig(config: ThreadlabsConfig): TemplateContext {
       typeof settings.description === 'string' ? settings.description : 'An open-source project.',
     licenseHolder:
       typeof settings.licenseHolder === 'string' ? settings.licenseHolder : 'Project Contributors',
+    licenseYear:
+      typeof settings.licenseYear === 'number' && Number.isInteger(settings.licenseYear)
+        ? settings.licenseYear
+        : new Date().getUTCFullYear(),
   };
 }
 

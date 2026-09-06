@@ -46,6 +46,7 @@ describe('declarative extension boundary', () => {
     [{ ...moduleFixture, contractVersion: '2.0' }, /contract major/iu],
     [{ ...moduleFixture, capabilities: ['process-execution'] }, /capability/iu],
     [{ ...moduleFixture, dependencies: ['missing'] }, /dependency/iu],
+    [{ ...moduleFixture, controls: undefined }, /must be an array.*controls/iu],
   ])('rejects executable, incompatible, or over-capable input', (fixture, message) => {
     expect(() => loadDeclarativeModule(fixture, new Set(['core']))).toThrow(message);
   });

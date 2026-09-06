@@ -9,7 +9,9 @@ export function auditCommand(options: CommandOptions): CommandResult {
     ...(config === undefined ? {} : { config }),
     ...(lock === undefined ? {} : { lock }),
   });
-  const actionable = report.findings.some((finding) => finding.state !== 'conformant');
+  const actionable = report.findings.some(
+    (finding) => finding.state !== 'conformant' && finding.state !== 'exception',
+  );
   return {
     command: 'audit',
     status: actionable ? 'findings' : 'success',

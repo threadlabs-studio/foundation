@@ -47,7 +47,12 @@ export function initCommand(options: CommandOptions): CommandResult {
       exceptions: [],
       ownership: [],
       release: { strategy: 'single-package' },
-      settings: { projectName, description, licenseHolder },
+      settings: {
+        projectName,
+        description,
+        licenseHolder,
+        licenseYear: new Date().getUTCFullYear(),
+      },
     };
   }
   const context = contextFromConfig(config);

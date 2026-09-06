@@ -3,13 +3,14 @@ export interface TemplateContext {
   readonly projectName: string;
   readonly description: string;
   readonly licenseHolder: string;
+  readonly licenseYear?: number;
 }
 
 const templates: Readonly<Record<string, string>> = {
   'core/gitignore': `node_modules/
 dist/
 coverage/
-.threadlabs/operations/
+.threadlabs/
 *.tgz
 .DS_Store
 `,
@@ -41,6 +42,14 @@ SOFTWARE.
 
 ## Development
 
+One-time setup (commit the generated \`pnpm-lock.yaml\`):
+
+\`\`\`sh
+corepack pnpm install
+\`\`\`
+
+Normal development:
+
 \`\`\`sh
 corepack pnpm install --frozen-lockfile
 corepack pnpm verify:pr
@@ -71,12 +80,14 @@ corepack pnpm verify:pr
     "build": "pnpm clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "oxlint src tests vitest.config.ts",
-    "format:check": "prettier --check .",
-    "test": "vitest run",
+    "format:check": "prettier --check README.md AGENTS.md prettier.config.mjs \\\"src/**/*.ts\\\" \\\"tests/**/*.ts\\\"",
+    "test": "vitest run --exclude tests/package.test.ts",
+    "test:package": "vitest run tests/package.test.ts",
     "verify:inner": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "verify:pr": "pnpm verify:inner && pnpm build",
+    "verify:pr": "pnpm verify:inner && pnpm build && pnpm test:package",
     "verify:extended": "pnpm verify:pr",
-    "verify:release": "pnpm verify:pr && pnpm pack --dry-run"
+    "verify:release": "pnpm verify:pr && pnpm pack --dry-run",
+    "prepack": "pnpm build"
   },
   "devDependencies": {
     "@types/node": "22.20.1",
@@ -154,6 +165,55 @@ import { hello } from '../src/index.js';
 
 describe('hello', () => {
   it('returns a greeting', () => expect(hello('world')).toBe('Hello, world!'));
+});
+`,
+  'public-api/package-test': `import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { isAbsolute, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { afterAll, describe, expect, it } from 'vitest';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+const workspace = mkdtempSync(join(tmpdir(), 'package-consumer-'));
+
+afterAll(() => rmSync(workspace, { recursive: true, force: true }));
+
+describe('published package contract', () => {
+  it('installs from its tarball and exposes the declared import', () => {
+    const packed = execFileSync('corepack', ['pnpm', 'pack', '--pack-destination', workspace], {
+      cwd: root,
+      encoding: 'utf8',
+    })
+      .trim()
+      .split('\\n')
+      .at(-1);
+    expect(packed).toBeDefined();
+    const tarball = isAbsolute(packed!) ? packed! : join(workspace, packed!);
+    writeFileSync(
+      join(workspace, 'package.json'),
+      JSON.stringify({ name: 'package-consumer', private: true, type: 'module' }),
+    );
+    execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
+      cwd: workspace,
+    });
+    const installed = JSON.parse(
+      readFileSync(join(workspace, 'node_modules', '{{projectName}}', 'package.json'), 'utf8'),
+    );
+    expect(installed.exports).toBeDefined();
+    expect(
+      execFileSync(
+        process.execPath,
+        [
+          '--input-type=module',
+          '--eval',
+          "import('{{projectName}}').then(() => process.stdout.write('ok'))",
+        ],
+        { cwd: workspace, encoding: 'utf8' },
+      ),
+    ).toBe('ok');
+  });
 });
 `,
   'github/ci': `name: CI
@@ -255,6 +315,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: extended-\${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     strategy:
@@ -303,7 +367,7 @@ This directory contains the project's maintained documentation. Document shipped
 All notable changes to this project will be documented in this file.
 `,
   'npm/changesets-fixed': `{
-  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [["*"]],
@@ -315,7 +379,7 @@ All notable changes to this project will be documented in this file.
 }
 `,
   'npm/changesets-independent': `{
-  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
@@ -327,7 +391,7 @@ All notable changes to this project will be documented in this file.
 }
 `,
   'npm/changesets-prerelease-channel': `{
-  "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
@@ -348,6 +412,11 @@ All notable changes to this project will be documented in this file.
   'npm/changesets-readme': `# Changesets
 
 Add a changeset for each user-visible change. Fixed, independent, and prerelease version behavior is selected by the checked-in Threadlabs release strategy.
+
+\`\`\`sh
+corepack pnpm dlx @changesets/cli@3.0.2 add
+corepack pnpm dlx @changesets/cli@3.0.2 version
+\`\`\`
 `,
   'npm/exceptional-release': `# Exceptional multi-artifact release
 
@@ -403,7 +472,11 @@ for (const candidate of packages(root)) {
   const release = run('gh', ['release', 'view', tag], root);
   if (release.status === 0) continue;
   if (!missing(release)) throw new Error('Source release state is unknown for ' + tag);
-  const created = run('gh', ['release', 'create', tag, '--generate-notes', '--verify-tag'], root);
+  const created = run(
+    'gh',
+    ['release', 'create', tag, '--generate-notes', '--target', process.env.GITHUB_SHA ?? 'HEAD'],
+    root,
+  );
   if (created.status !== 0) throw new Error('Source release failed for ' + tag + ': ' + created.stderr);
 }
 `,
@@ -426,7 +499,7 @@ export function renderTemplate(name: string, context: TemplateContext): string {
     description: context.description,
     descriptionJson: JSON.stringify(context.description).slice(1, -1),
     licenseHolder: context.licenseHolder,
-    year: String(new Date().getUTCFullYear()),
+    year: String(context.licenseYear ?? new Date().getUTCFullYear()),
   };
   return template.replace(/\{\{([A-Za-z]+)\}\}/gu, (_, key: string) => replacements[key] ?? '');
 }

@@ -1,36 +1,85 @@
 # Threadlabs Foundation
 
-Threadlabs Foundation is an executable, evidence-based standard for starting and maintaining open-source repositories.
+Threadlabs Foundation turns an evidence-based repository standard into a starter and maintenance CLI. It can create a new project, audit an existing one without changing it, preview an immutable adoption plan, and apply only the plan you approved.
 
-The goal is not to force every project through the strictest possible machinery. Foundation makes each control explicit, explains what confidence it buys and what it costs, and lets maintainers adopt stronger verification where the project warrants it.
+The standard aims toward strong outcomes without pretending every control is free. Each module states the failure it prevents, when it applies, which verification lane owns it, and its expected cost. Projects can keep purpose-built files locally owned and record reviewed exceptions instead of silently drifting.
 
-## What it will provide
+## Start a TypeScript library
 
-- A guided `threadlabs` CLI for new and existing repositories
-- Composable standards for tooling, CI, publishing, dependency freshness, and agent guidance
-- Read-only audits and reviewable adoption plans before repository changes
-- Verification lanes that scale from fast local feedback to release confidence
-- Machine-readable configuration, evidence, and intentional exceptions
+Foundation is not published to npm yet. Run the public repository directly with pnpm and Corepack:
 
-Foundation is in active development. The reproducible package and CLI foundation is complete; the contracts, module catalog, audit engine, safe application flow, and integrations are tracked in the [implementation plan](docs/plans/2026-09-03-1329-feat-threadlabs-project-framework-plan.md).
+```sh
+corepack pnpm dlx github:threadlabs-studio/foundation init ./my-library \
+  --bundle typescript-library \
+  --name my-library \
+  --description "A useful library" \
+  --owner "Project Contributors" \
+  --json
+```
 
-## Principles
+`init` writes only `.threadlabs/plans/latest.json`. Review its paths and digest, then apply that exact plan:
 
-1. Prefer maintained LTS runtimes and stable tooling.
-2. Treat strictness as a reasoned, visible choice rather than a universal maximum.
-3. Preview changes before applying them and make repeated application safe.
-4. Keep local repository work useful when optional hosted-service integrations are unavailable.
-5. Produce evidence that both maintainers and coding agents can use to judge completion.
+```sh
+corepack pnpm dlx github:threadlabs-studio/foundation apply ./my-library \
+  --plan .threadlabs/plans/latest.json \
+  --digest <digest-from-init>
+```
 
-## Development
+In an interactive terminal you may omit the bundle and module flags. The guided flow recommends the TypeScript library bundle and lets you select optional modules. A checked-in config and non-interactive flags resolve through the same engine.
 
-Foundation requires Node.js 22.13 or later and pins pnpm through Corepack.
+## Adopt it in an existing repository
+
+Start read-only. Foundation deliberately refuses to treat existing custom files as template-owned:
+
+```sh
+corepack pnpm dlx github:threadlabs-studio/foundation audit . --json
+```
+
+Create `threadlabs.config.json` after deciding which files Foundation may manage, then preview and apply:
+
+```sh
+corepack pnpm dlx github:threadlabs-studio/foundation plan . --check --json
+corepack pnpm dlx github:threadlabs-studio/foundation plan . --json
+corepack pnpm dlx github:threadlabs-studio/foundation apply . \
+  --plan .threadlabs/plans/latest.json \
+  --digest <reviewed-digest>
+```
+
+Local and GitHub mutations have separate plans and approvals. Package publication is never available from the local CLI; it is generated as a protected, human-dispatched OIDC workflow.
+
+## What the recommended bundle installs
+
+The `typescript-library` bundle composes core repository policy, strict ESM TypeScript on maintained Node LTS lines, stable CI, dependency freshness, coding-agent guidance, public package contracts, generated-artifact ownership, and safe npm release controls. Optional modules add browser, cross-platform, documentation-site, performance, or long-running verification only when those risks apply.
+
+The important distinction is not “strict” versus “relaxed.” It is:
+
+- fast deterministic checks belong in the inner and pull-request lanes;
+- costly or noisy checks move to extended or scheduled lanes;
+- package and provenance checks belong in the release lane;
+- a control can be excepted only with a reason, owner, scope, and review date.
+
+See [the standard](docs/standard.md), [configuration](docs/configuration.md), [control economics](docs/controls.md), and [release flow](docs/release.md).
+
+## Commands
+
+`init`, `audit`, `plan`, `apply`, `status`, `resume`, `upgrade`, `explain`, `clean`, `verify`, `freshness`, `github`, and `release` all support `--json`. Exit codes distinguish findings, invalid input, stale plans, unavailable evidence, cancellation, and mutation failure.
+
+```sh
+corepack pnpm dlx github:threadlabs-studio/foundation --help
+```
+
+## Develop Foundation
+
+Foundation supports Node.js 22.13+ and Node 24 and pins pnpm through Corepack.
 
 ```sh
 corepack pnpm install --frozen-lockfile
 corepack pnpm verify:pr
-corepack pnpm threadlabs --help
+corepack pnpm threadlabs audit . --json
+corepack pnpm threadlabs plan . --check --json
 ```
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing public contracts. Security reports follow [SECURITY.md](SECURITY.md).
 
 ## License
 

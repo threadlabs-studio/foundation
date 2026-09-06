@@ -10,7 +10,7 @@ export const crossPlatformModule = defineModule({
   expectedSeconds: 600,
   artifacts: [
     {
-      path: '.github/workflows/cross-platform.yml',
+      path: '.github/workflows/extended.yml',
       ownership: 'managed',
       template: 'github/cross-platform',
     },

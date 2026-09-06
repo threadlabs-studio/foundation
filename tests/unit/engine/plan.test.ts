@@ -43,4 +43,22 @@ describe('operation planning', () => {
       }),
     ).toThrow(/ambiguous/iu);
   });
+
+  it('leaves explicitly local artifacts alone', () => {
+    const root = mkdtempSync(join(tmpdir(), 'threadlabs-plan-'));
+    roots.push(root);
+    writeFileSync(join(root, 'README.md'), '# Purpose-built documentation\n');
+    const config = {
+      ...makeConfig(),
+      ownership: [{ path: 'README.md', mode: 'local' as const }],
+    };
+
+    const planned = createOperationPlan(root, config, {
+      projectName: 'sample-library',
+      description: 'A sample library.',
+      licenseHolder: 'Sample Authors',
+    });
+
+    expect(planned.plan.localEffects.map(({ path }) => path)).not.toContain('README.md');
+  });
 });

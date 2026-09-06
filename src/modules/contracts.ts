@@ -44,6 +44,14 @@ export function loadDeclarativeModule(
   ) {
     throw new Error('Unsupported extension capability.');
   }
+  for (const key of ['dependencies', 'conflicts', 'controls', 'artifacts', 'stages'] as const) {
+    if (!Array.isArray(record[key])) throw new Error(`Extension field must be an array: ${key}`);
+  }
+  for (const key of ['id', 'version', 'title', 'description'] as const) {
+    if (typeof record[key] !== 'string' || record[key].length === 0) {
+      throw new Error(`Extension field must be a nonempty string: ${key}`);
+    }
+  }
   const module = structuredClone(record) as unknown as ModuleDefinition;
   const issues = validateModule(module, availableModules);
   if (issues.length > 0) throw new Error(issues.map((issue) => issue.message).join(' '));

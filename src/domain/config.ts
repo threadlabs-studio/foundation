@@ -51,6 +51,13 @@ export interface ThreadlabsLock {
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/u;
 const identifierPattern = /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u;
+const releaseStrategies = new Set<ReleaseStrategy>([
+  'single-package',
+  'fixed-monorepo',
+  'independent-monorepo',
+  'prerelease-channel',
+  'exceptional-multi-artifact',
+]);
 
 function duplicateIssues(values: readonly unknown[], path: string): ValidationIssue[] {
   const seen = new Set<string>();
@@ -145,6 +152,7 @@ export function validateConfig(input: unknown): ValidationIssue[] {
   if (!Array.isArray(value.ownership)) {
     issues.push(validationIssue('invalid_type', '/ownership', 'ownership must be an array.'));
   } else {
+    const ownedPaths = new Set<string>();
     value.ownership.forEach((item, index) => {
       if (typeof item !== 'object' || item === null || Array.isArray(item)) {
         issues.push(
@@ -162,6 +170,16 @@ export function validateConfig(input: unknown): ValidationIssue[] {
             path: `/ownership/${index}/path`,
           })),
         );
+        if (ownedPaths.has(grant.path)) {
+          issues.push(
+            validationIssue(
+              'duplicate_id',
+              `/ownership/${index}/path`,
+              `Duplicate ownership path: ${grant.path}`,
+            ),
+          );
+        }
+        ownedPaths.add(grant.path);
       }
       if (!OWNERSHIP_STATES.includes(grant.mode as OwnershipState)) {
         issues.push(
@@ -184,6 +202,27 @@ export function validateConfig(input: unknown): ValidationIssue[] {
         }
       }
     });
+  }
+  if (value.release !== undefined) {
+    if (
+      typeof value.release !== 'object' ||
+      value.release === null ||
+      Array.isArray(value.release)
+    ) {
+      issues.push(validationIssue('invalid_type', '/release', 'release must be an object.'));
+    } else if (
+      !releaseStrategies.has((value.release as { strategy?: ReleaseStrategy }).strategy!)
+    ) {
+      issues.push(
+        validationIssue('invalid_type', '/release/strategy', 'Unknown release strategy.'),
+      );
+    }
+  }
+  if (
+    value.settings !== undefined &&
+    (typeof value.settings !== 'object' || value.settings === null || Array.isArray(value.settings))
+  ) {
+    issues.push(validationIssue('invalid_type', '/settings', 'settings must be an object.'));
   }
   return issues;
 }

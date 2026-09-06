@@ -54,6 +54,23 @@ describe('manifest contract', () => {
       ]),
     );
   });
+
+  it('rejects duplicate ownership paths and unknown release strategies', () => {
+    const issues = validateConfig({
+      ...minimalConfig,
+      ownership: [
+        { path: 'README.md', mode: 'local' },
+        { path: 'README.md', mode: 'managed' },
+      ],
+      release: { strategy: 'guess' },
+    });
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'duplicate_id', path: '/ownership/1/path' }),
+        expect.objectContaining({ code: 'invalid_type', path: '/release/strategy' }),
+      ]),
+    );
+  });
 });
 
 describe('managed paths', () => {

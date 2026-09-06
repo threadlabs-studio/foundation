@@ -12,7 +12,7 @@ export interface AuditStage {
 export function buildAuditStages(
   modules: readonly ModuleDefinition[],
   existingPaths: ReadonlySet<string>,
-  managedPaths: ReadonlySet<string>,
+  resolvedOwnershipPaths: ReadonlySet<string>,
 ): readonly AuditStage[] {
   return modules
     .flatMap((module) =>
@@ -22,7 +22,7 @@ export function buildAuditStages(
         moduleId: module.id,
         artifactPaths: [...stage.artifactPaths].toSorted(compareText),
         blockedPaths: stage.artifactPaths
-          .filter((path) => existingPaths.has(path) && !managedPaths.has(path))
+          .filter((path) => existingPaths.has(path) && !resolvedOwnershipPaths.has(path))
           .toSorted(compareText),
       })),
     )

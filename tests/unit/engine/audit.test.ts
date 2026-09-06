@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { auditSnapshot } from '../../../src/engine/audit.js';
+import { makeConfig } from '../../utils/config.js';
 
 describe('audit engine', () => {
   it('recommends a first-green TypeScript baseline for an empty repository', () => {
@@ -56,6 +57,29 @@ describe('audit engine', () => {
         controlId: 'typescript-node.baseline',
         explanation: expect.stringMatching(/budget/iu),
       }),
+    );
+  });
+
+  it('reports an explicitly local artifact as an intentional exception', () => {
+    const config = {
+      ...makeConfig(),
+      ownership: [{ path: 'README.md', mode: 'local' as const }],
+    };
+    const report = auditSnapshot(
+      {
+        files: new Map([
+          ['README.md', '# Local documentation\n'],
+          ['LICENSE', 'Local license\n'],
+          ['.gitignore', 'dist/\n'],
+        ]),
+        symlinks: [],
+        caseCollisions: [],
+      },
+      { config },
+    );
+
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({ title: 'README.md is locally owned', state: 'exception' }),
     );
   });
 });

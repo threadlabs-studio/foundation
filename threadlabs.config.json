@@ -1,0 +1,114 @@
+{
+  "bundles": [
+    "typescript-library"
+  ],
+  "exceptions": [],
+  "modules": [
+    "cross-platform"
+  ],
+  "ownership": [
+    {
+      "mode": "local",
+      "path": ".gitignore"
+    },
+    {
+      "mode": "local",
+      "path": "AGENTS.md"
+    },
+    {
+      "mode": "local",
+      "path": "CHANGELOG.md"
+    },
+    {
+      "mode": "local",
+      "path": "README.md"
+    },
+    {
+      "mode": "local",
+      "path": "oxlint.json"
+    },
+    {
+      "mode": "local",
+      "path": "package.json"
+    },
+    {
+      "mode": "local",
+      "path": "pnpm-workspace.yaml"
+    },
+    {
+      "mode": "local",
+      "path": "prettier.config.mjs"
+    },
+    {
+      "mode": "local",
+      "path": "src/index.ts"
+    },
+    {
+      "mode": "local",
+      "path": "tests/index.test.ts"
+    },
+    {
+      "mode": "local",
+      "path": "tests/package.test.ts"
+    },
+    {
+      "mode": "local",
+      "path": "tsconfig.build.json"
+    },
+    {
+      "mode": "local",
+      "path": "tsconfig.json"
+    },
+    {
+      "mode": "local",
+      "path": "vitest.config.ts"
+    },
+    {
+      "mode": "managed",
+      "path": ".gitattributes"
+    },
+    {
+      "mode": "managed",
+      "path": ".github/dependabot.yml"
+    },
+    {
+      "mode": "managed",
+      "path": ".github/workflows/ci.yml"
+    },
+    {
+      "mode": "managed",
+      "path": ".github/workflows/extended.yml"
+    },
+    {
+      "mode": "managed",
+      "path": ".github/workflows/release.yml"
+    },
+    {
+      "mode": "managed",
+      "path": ".threadlabs.lock.json"
+    },
+    {
+      "mode": "managed",
+      "path": "LICENSE"
+    },
+    {
+      "mode": "managed",
+      "path": "scripts/release.mjs"
+    },
+    {
+      "mode": "managed",
+      "path": "threadlabs.config.json"
+    }
+  ],
+  "release": {
+    "strategy": "single-package"
+  },
+  "schemaVersion": "1.0",
+  "settings": {
+    "description": "An executable, evidence-based standard for open-source repositories.",
+    "licenseHolder": "Threadlabs Studio",
+    "licenseYear": 2026,
+    "projectName": "threadlabs"
+  },
+  "standardVersion": "1.0.0"
+}

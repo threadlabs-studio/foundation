@@ -8,6 +8,7 @@ import { inferModules } from './applicability.js';
 import { observationFromExternal } from './observe.js';
 import { buildAuditStages, type AuditStage } from './stages.js';
 import { hashContent } from './fingerprint.js';
+import { releaseArtifacts } from './release.js';
 
 export interface AuditOptions {
   readonly config?: ThreadlabsConfig;
@@ -40,7 +41,7 @@ function finding(
     title,
     explanation,
     evidence,
-    confidenceGain: state === 'conformant' ? 'low' : 'medium',
+    confidenceGain: state === 'conformant' || state === 'exception' ? 'low' : 'medium',
     estimatedCiSeconds,
     migrationRisk: state === 'unknown' ? 'medium' : 'low',
     humanEffort: state === 'unknown' ? 'medium' : 'low',
@@ -67,12 +68,28 @@ export function auditSnapshot(
       .filter(([, state]) => state === 'managed' || state === 'section-managed')
       .map(([path]) => path),
   );
+  const resolvedOwnershipPaths = new Set(
+    [...ownership].filter(([, state]) => state !== 'ambiguous').map(([path]) => path),
+  );
   const observations: Observation[] = (options.externalEvidence ?? []).map(observationFromExternal);
   const findings: Finding[] = [];
 
-  if (snapshot.symlinks.length > 0) {
+  const selectedArtifactPaths = new Set(
+    modules.flatMap((module) => [
+      ...module.artifacts.map(({ path }) => path),
+      ...(module.id === 'npm-publish'
+        ? releaseArtifacts(options.config?.release?.strategy ?? 'single-package').map(
+            ({ path }) => path,
+          )
+        : []),
+    ]),
+  );
+  const managedSymlinks = snapshot.symlinks.filter((link) =>
+    [...selectedArtifactPaths].some((path) => path === link || path.startsWith(`${link}/`)),
+  );
+  if (managedSymlinks.length > 0) {
     throw new Error(
-      `Managed-path symlink traversal is not supported: ${snapshot.symlinks.join(', ')}`,
+      `Managed-path symlink traversal is not supported: ${managedSymlinks.join(', ')}`,
     );
   }
   if (snapshot.caseCollisions.length > 0) {
@@ -103,9 +120,28 @@ export function auditSnapshot(
         );
       }
     }
-    for (const artifact of module.artifacts) {
+    const artifacts = [
+      ...module.artifacts,
+      ...(module.id === 'npm-publish'
+        ? releaseArtifacts(options.config?.release?.strategy ?? 'single-package')
+        : []),
+    ];
+    for (const artifact of artifacts) {
       const content = snapshot.files.get(artifact.path);
       const controlId = module.controls[0]?.id ?? `${module.id}.baseline`;
+      const ownershipMode = ownership.get(artifact.path);
+      if (ownershipMode === 'local' || ownershipMode === 'unmanaged') {
+        findings.push(
+          finding(
+            controlId,
+            'exception',
+            `${artifact.path} is locally owned`,
+            'The manifest intentionally leaves this artifact outside Foundation management.',
+            [`path:${artifact.path}`, `ownership:${ownershipMode}`],
+          ),
+        );
+        continue;
+      }
       if (content === undefined) {
         findings.push(
           finding(
@@ -182,7 +218,7 @@ export function auditSnapshot(
     findings: findings.toSorted((left, right) =>
       compareText(`${left.controlId}:${left.title}`, `${right.controlId}:${right.title}`),
     ),
-    stages: buildAuditStages(modules, new Set(snapshot.files.keys()), managedPaths),
+    stages: buildAuditStages(modules, new Set(snapshot.files.keys()), resolvedOwnershipPaths),
   };
 }
 

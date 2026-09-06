@@ -33,6 +33,7 @@ describe('initialization request parity', () => {
         projectName: 'sample-library',
         description: 'A sample library.',
         licenseHolder: 'Sample Authors',
+        licenseYear: new Date().getUTCFullYear(),
       },
     };
     writeFileSync(configPath, JSON.stringify(config));
