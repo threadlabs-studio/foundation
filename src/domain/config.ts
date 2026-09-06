@@ -31,6 +31,13 @@ export interface OwnershipGrant {
   readonly anchors?: readonly [string, string];
 }
 
+export interface FreshnessHold {
+  readonly name: string;
+  readonly reason: string;
+  readonly owner: string;
+  readonly reviewDate: string;
+}
+
 export interface ThreadlabsConfig {
   readonly schemaVersion: typeof CONFIG_SCHEMA_VERSION;
   readonly standardVersion: string;
@@ -38,6 +45,7 @@ export interface ThreadlabsConfig {
   readonly modules: readonly string[];
   readonly exceptions: readonly StandardException[];
   readonly ownership: readonly OwnershipGrant[];
+  readonly freshness?: { readonly holds: readonly FreshnessHold[] };
   readonly release?: { readonly strategy: ReleaseStrategy };
   readonly settings?: Readonly<Record<string, unknown>>;
 }
@@ -59,6 +67,12 @@ const releaseStrategies = new Set<ReleaseStrategy>([
   'exceptional-multi-artifact',
 ]);
 
+function isCalendarDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !datePattern.test(value)) return false;
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value;
+}
+
 function duplicateIssues(values: readonly unknown[], path: string): ValidationIssue[] {
   const seen = new Set<string>();
   const issues: ValidationIssue[] = [];
@@ -72,6 +86,22 @@ function duplicateIssues(values: readonly unknown[], path: string): ValidationIs
     }
   }
   return issues;
+}
+
+function unknownKeyIssues(
+  value: Readonly<Record<string, unknown>>,
+  allowed: ReadonlySet<string>,
+  path: string,
+): ValidationIssue[] {
+  return Object.keys(value)
+    .filter((key) => !allowed.has(key))
+    .map((key) =>
+      validationIssue(
+        'unknown_property',
+        `${path}/${key}`.replace('//', '/'),
+        `Unknown property: ${key}`,
+      ),
+    );
 }
 
 export function validateManagedPath(path: string): ValidationIssue[] {
@@ -98,7 +128,21 @@ export function validateConfig(input: unknown): ValidationIssue[] {
     return [validationIssue('invalid_type', '/', 'Manifest must be an object.')];
   }
   const value = input as Record<string, unknown>;
-  const issues: ValidationIssue[] = [];
+  const issues: ValidationIssue[] = unknownKeyIssues(
+    value,
+    new Set([
+      'schemaVersion',
+      'standardVersion',
+      'bundles',
+      'modules',
+      'exceptions',
+      'ownership',
+      'freshness',
+      'release',
+      'settings',
+    ]),
+    '',
+  );
   if (typeof value.schemaVersion !== 'string' || !value.schemaVersion.startsWith('1.')) {
     issues.push(
       validationIssue('unsupported_schema', '/schemaVersion', 'Only schema major 1 is supported.'),
@@ -131,6 +175,13 @@ export function validateConfig(input: unknown): ValidationIssue[] {
         return;
       }
       const exception = item as Record<string, unknown>;
+      issues.push(
+        ...unknownKeyIssues(
+          exception,
+          new Set(['controlId', 'reason', 'owner', 'scope', 'reviewDate']),
+          `/exceptions/${index}`,
+        ),
+      );
       for (const key of ['controlId', 'reason', 'owner', 'scope'] as const) {
         if (typeof exception[key] !== 'string' || exception[key].trim().length === 0) {
           issues.push(
@@ -138,7 +189,7 @@ export function validateConfig(input: unknown): ValidationIssue[] {
           );
         }
       }
-      if (typeof exception.reviewDate !== 'string' || !datePattern.test(exception.reviewDate)) {
+      if (!isCalendarDate(exception.reviewDate)) {
         issues.push(
           validationIssue(
             'invalid_review_date',
@@ -161,6 +212,9 @@ export function validateConfig(input: unknown): ValidationIssue[] {
         return;
       }
       const grant = item as Record<string, unknown>;
+      issues.push(
+        ...unknownKeyIssues(grant, new Set(['path', 'mode', 'anchors']), `/ownership/${index}`),
+      );
       if (typeof grant.path !== 'string') {
         issues.push(validationIssue('required', `/ownership/${index}/path`, 'path is required.'));
       } else {
@@ -203,6 +257,78 @@ export function validateConfig(input: unknown): ValidationIssue[] {
       }
     });
   }
+  if (value.freshness !== undefined) {
+    if (
+      typeof value.freshness !== 'object' ||
+      value.freshness === null ||
+      Array.isArray(value.freshness)
+    ) {
+      issues.push(validationIssue('invalid_type', '/freshness', 'freshness must be an object.'));
+    } else {
+      const freshness = value.freshness as Record<string, unknown>;
+      issues.push(...unknownKeyIssues(freshness, new Set(['holds']), '/freshness'));
+      const holds = freshness.holds;
+      if (!Array.isArray(holds)) {
+        issues.push(
+          validationIssue('invalid_type', '/freshness/holds', 'freshness.holds must be an array.'),
+        );
+      } else {
+        const names = new Set<string>();
+        holds.forEach((item, index) => {
+          if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+            issues.push(
+              validationIssue(
+                'invalid_type',
+                `/freshness/holds/${index}`,
+                'Freshness hold must be an object.',
+              ),
+            );
+            return;
+          }
+          const hold = item as Record<string, unknown>;
+          issues.push(
+            ...unknownKeyIssues(
+              hold,
+              new Set(['name', 'reason', 'owner', 'reviewDate']),
+              `/freshness/holds/${index}`,
+            ),
+          );
+          for (const key of ['name', 'reason', 'owner'] as const) {
+            if (typeof hold[key] !== 'string' || hold[key].trim().length === 0) {
+              issues.push(
+                validationIssue(
+                  'required',
+                  `/freshness/holds/${index}/${key}`,
+                  `${key} is required.`,
+                ),
+              );
+            }
+          }
+          if (typeof hold.name === 'string') {
+            if (names.has(hold.name)) {
+              issues.push(
+                validationIssue(
+                  'duplicate_id',
+                  `/freshness/holds/${index}/name`,
+                  `Duplicate freshness hold: ${hold.name}`,
+                ),
+              );
+            }
+            names.add(hold.name);
+          }
+          if (!isCalendarDate(hold.reviewDate)) {
+            issues.push(
+              validationIssue(
+                'invalid_review_date',
+                `/freshness/holds/${index}/reviewDate`,
+                'reviewDate must use YYYY-MM-DD.',
+              ),
+            );
+          }
+        });
+      }
+    }
+  }
   if (value.release !== undefined) {
     if (
       typeof value.release !== 'object' ||
@@ -210,12 +336,14 @@ export function validateConfig(input: unknown): ValidationIssue[] {
       Array.isArray(value.release)
     ) {
       issues.push(validationIssue('invalid_type', '/release', 'release must be an object.'));
-    } else if (
-      !releaseStrategies.has((value.release as { strategy?: ReleaseStrategy }).strategy!)
-    ) {
-      issues.push(
-        validationIssue('invalid_type', '/release/strategy', 'Unknown release strategy.'),
-      );
+    } else {
+      const release = value.release as Record<string, unknown>;
+      issues.push(...unknownKeyIssues(release, new Set(['strategy']), '/release'));
+      if (!releaseStrategies.has(release.strategy as ReleaseStrategy)) {
+        issues.push(
+          validationIssue('invalid_type', '/release/strategy', 'Unknown release strategy.'),
+        );
+      }
     }
   }
   if (

@@ -37,6 +37,11 @@ describe('journaled apply and resume', () => {
 
     const journalPath = join(root, '.threadlabs', 'operations', `${planned.digest}.jsonl`);
     const journal = readFileSync(journalPath, 'utf8');
+    const states = journal
+      .trim()
+      .split('\n')
+      .map((line) => (JSON.parse(line) as { state: string }).state);
+    expect(states).toEqual(expect.arrayContaining(['pending', 'running', 'succeeded']));
     const reapplied = applyOperationPlan(root, planned.plan, planned.digest);
     expect(reapplied.state).toBe('no-op');
     expect(readFileSync(journalPath, 'utf8')).toBe(journal);

@@ -10,6 +10,7 @@ const unorderedCollectionKeys = new Set([
   'dependencies',
   'exceptions',
   'externalEvidence',
+  'holds',
   'modules',
   'observations',
   'ownership',

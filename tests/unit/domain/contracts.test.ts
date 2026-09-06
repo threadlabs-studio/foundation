@@ -71,6 +71,46 @@ describe('manifest contract', () => {
       ]),
     );
   });
+
+  it('requires reviewable metadata for intentionally held packages', () => {
+    const issues = validateConfig({
+      ...minimalConfig,
+      freshness: {
+        holds: [
+          { name: '@types/node', reason: '', owner: '', reviewDate: 'eventually' },
+          {
+            name: '@types/node',
+            reason: 'Duplicate synthetic hold.',
+            owner: 'Example owner',
+            reviewDate: '2027-01-31',
+          },
+        ],
+      },
+    });
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'required', path: '/freshness/holds/0/reason' }),
+        expect.objectContaining({ code: 'required', path: '/freshness/holds/0/owner' }),
+        expect.objectContaining({ code: 'invalid_review_date' }),
+        expect.objectContaining({ code: 'duplicate_id' }),
+      ]),
+    );
+  });
+
+  it('rejects properties the published schema does not define', () => {
+    expect(
+      validateConfig({
+        ...minimalConfig,
+        accidental: true,
+        release: { strategy: 'single-package', surprise: true },
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'unknown_property', path: '/accidental' }),
+        expect.objectContaining({ code: 'unknown_property', path: '/release/surprise' }),
+      ]),
+    );
+  });
 });
 
 describe('managed paths', () => {

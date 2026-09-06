@@ -15,6 +15,27 @@ describe('verification lanes', () => {
         (check) => check.id,
       ),
     ).toContain('browser');
+    expect(
+      selectVerificationChecks(['core', 'typescript-node', 'public-api'], 'pr').map(
+        (check) => check.id,
+      ),
+    ).toContain('package');
+    expect(
+      selectVerificationChecks(['core', 'typescript-node'], 'pr').map((check) => check.id),
+    ).not.toContain('package');
+  });
+
+  it('reports missing applicable package evidence as partial', () => {
+    const evidence = verifyRepository('.', ['core', 'typescript-node', 'public-api'], 'pr', {
+      run: (check) => ({
+        state: check.id === 'package' ? 'skipped' : 'passed',
+        durationMs: 1,
+      }),
+      revision: () => ({ revision: 'abc123', dirtyFingerprint: 'dirty' }),
+      now: () => '2026-09-06T00:00:00.000Z',
+    });
+    expect(evidence.state).toBe('partial');
+    expect(evidence.skippedControls).toContain('verification.package');
   });
 
   it('does not claim a passed lane when checks fail, cancel, or are unavailable', () => {

@@ -26,6 +26,5 @@ export function buildAuditStages(
           .toSorted(compareText),
       })),
     )
-    .filter((stage) => stage.artifactPaths.length > 0)
-    .toSorted((left, right) => compareText(left.id, right.id));
+    .filter((stage) => stage.artifactPaths.length > 0);
 }

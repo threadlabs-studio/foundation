@@ -77,7 +77,7 @@ export function resolveSelection(selection: ModuleSelection): ResolvedSelection 
     resolved.add(id);
   };
   [...requested].toSorted(compareText).forEach(visit);
-  const moduleIds = [...resolved].toSorted(compareText);
+  const moduleIds = [...resolved];
   for (const id of moduleIds) {
     const module = getBuiltInModule(id);
     const conflict = module.conflicts.find((candidate) => resolved.has(candidate));

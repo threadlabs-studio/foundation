@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { auditSnapshot } from '../../../src/engine/audit.js';
+import { hashContent } from '../../../src/engine/fingerprint.js';
 import { makeConfig } from '../../utils/config.js';
 
 describe('audit engine', () => {
@@ -80,6 +81,66 @@ describe('audit engine', () => {
 
     expect(report.findings).toContainEqual(
       expect.objectContaining({ title: 'README.md is locally owned', state: 'exception' }),
+    );
+  });
+
+  it('surfaces reviewed control exceptions without making the audit actionable', () => {
+    const report = auditSnapshot(
+      { files: new Map(), symlinks: [], caseCollisions: [] },
+      {
+        config: {
+          ...makeConfig([]),
+          modules: [],
+          exceptions: [
+            {
+              controlId: 'core.baseline',
+              reason: 'Synthetic temporary constraint.',
+              owner: 'Example owner',
+              scope: 'Synthetic fixture',
+              reviewDate: '2027-01-01',
+            },
+          ],
+        },
+      },
+    );
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({ controlId: 'core.baseline', state: 'exception' }),
+    );
+  });
+
+  it('checks only the owned section while allowing local surrounding edits', () => {
+    const start = '<!-- threadlabs:start -->';
+    const end = '<!-- threadlabs:end -->';
+    const config = {
+      ...makeConfig(),
+      ownership: [
+        { path: 'README.md', mode: 'section-managed' as const, anchors: [start, end] as const },
+        { path: '.gitignore', mode: 'local' as const },
+        { path: 'LICENSE', mode: 'local' as const },
+      ],
+    };
+    const report = auditSnapshot(
+      {
+        files: new Map([
+          ['README.md', `Changed local heading\n${start}\nManaged\n${end}\n`],
+          ['.gitignore', 'Local\n'],
+          ['LICENSE', 'Local\n'],
+        ]),
+        symlinks: [],
+        caseCollisions: [],
+      },
+      {
+        config,
+        lock: {
+          schemaVersion: '1.0',
+          standardVersion: '1.0.0',
+          modules: { core: '1.0.0' },
+          artifacts: { 'README.md': hashContent('\nManaged\n') },
+        },
+      },
+    );
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({ title: 'README.md matches', state: 'conformant' }),
     );
   });
 });

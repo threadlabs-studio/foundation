@@ -7,8 +7,8 @@ import { allBuiltInModules, getBuiltInModule, resolveSelection } from '../module
 import { inferModules } from './applicability.js';
 import { observationFromExternal } from './observe.js';
 import { buildAuditStages, type AuditStage } from './stages.js';
-import { hashContent } from './fingerprint.js';
 import { releaseArtifacts } from './release.js';
+import { ownedContentDigest } from './sections.js';
 
 export interface AuditOptions {
   readonly config?: ThreadlabsConfig;
@@ -60,19 +60,33 @@ export function auditSnapshot(
       : resolveSelection({ bundles: options.config.bundles, modules: options.config.modules })
           .moduleIds;
   const modules = selectedModules.map(getBuiltInModule);
-  const ownership = new Map(
-    options.config?.ownership.map((grant) => [grant.path, grant.mode]) ?? [],
-  );
+  const ownership = new Map(options.config?.ownership.map((grant) => [grant.path, grant]) ?? []);
   const managedPaths = new Set(
     [...ownership]
-      .filter(([, state]) => state === 'managed' || state === 'section-managed')
+      .filter(([, grant]) => grant.mode === 'managed' || grant.mode === 'section-managed')
       .map(([path]) => path),
   );
   const resolvedOwnershipPaths = new Set(
-    [...ownership].filter(([, state]) => state !== 'ambiguous').map(([path]) => path),
+    [...ownership].filter(([, grant]) => grant.mode !== 'ambiguous').map(([path]) => path),
   );
   const observations: Observation[] = (options.externalEvidence ?? []).map(observationFromExternal);
   const findings: Finding[] = [];
+
+  for (const exception of options.config?.exceptions ?? []) {
+    findings.push(
+      finding(
+        exception.controlId,
+        'exception',
+        `Reviewed exception for ${exception.controlId}`,
+        exception.reason,
+        [
+          `owner:${exception.owner}`,
+          `scope:${exception.scope}`,
+          `review-date:${exception.reviewDate}`,
+        ],
+      ),
+    );
+  }
 
   const selectedArtifactPaths = new Set(
     modules.flatMap((module) => [
@@ -129,7 +143,8 @@ export function auditSnapshot(
     for (const artifact of artifacts) {
       const content = snapshot.files.get(artifact.path);
       const controlId = module.controls[0]?.id ?? `${module.id}.baseline`;
-      const ownershipMode = ownership.get(artifact.path);
+      const ownershipGrant = ownership.get(artifact.path);
+      const ownershipMode = ownershipGrant?.mode;
       if (ownershipMode === 'local' || ownershipMode === 'unmanaged') {
         findings.push(
           finding(
@@ -154,7 +169,21 @@ export function auditSnapshot(
         );
       } else {
         const lockedDigest = options.lock?.artifacts[artifact.path];
-        const actualDigest = hashContent(content);
+        let actualDigest: string;
+        try {
+          actualDigest = ownedContentDigest(content, ownershipGrant);
+        } catch (error) {
+          findings.push(
+            finding(
+              controlId,
+              'unknown',
+              `Section ownership is ambiguous for ${artifact.path}`,
+              error instanceof Error ? error.message : 'Section anchors could not be verified.',
+              [`path:${artifact.path}`],
+            ),
+          );
+          continue;
+        }
         if (managedPaths.has(artifact.path) && lockedDigest === actualDigest) {
           findings.push(
             finding(

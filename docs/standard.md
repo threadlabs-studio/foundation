@@ -6,9 +6,11 @@ Use a maintained LTS-first TypeScript/Node baseline for public libraries, then c
 
 ## Technology baseline
 
-The recommended library baseline is strict ESM TypeScript, pnpm through Corepack, Vitest, oxlint, Prettier, and GitHub Actions. Node 24 is the primary maintained LTS line and Node 22.13+ remains a supported compatibility line. Exact tool versions and action commits are checked in. Dependabot proposes compatible dependency and action updates weekly; major, security, prerelease, held, EOL, stale, and failed-update states stay distinct.
+The recommended library baseline is strict ESM TypeScript, pnpm through Corepack, Vitest, oxlint, Prettier, and GitHub Actions. Node 24 is the primary maintained LTS line and Node 22.13 through the Node 22 line remains a supported compatibility range. Odd-numbered and EOL lines are not accidentally promised by an open-ended engine range. Exact tool versions and action commits are checked in. Dependabot proposes compatible dependency and action updates weekly; major, security, prerelease, held, EOL, stale, and failed-update states stay distinct.
 
 Version drift is presumed accidental unless an exception records a reason, owner, scope, and review date. Maintained stable releases are preferred. Prerelease, EOL, or intentionally held tooling needs explicit evidence and periodic review.
+
+The `freshness` command compares the declared Node ranges with the [published Node.js release schedule](https://github.com/nodejs/Release#release-schedule). Unavailable lifecycle data remains unknown; it never silently validates an EOL or non-LTS development line.
 
 ## Verification lanes
 

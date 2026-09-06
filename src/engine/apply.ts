@@ -22,6 +22,52 @@ function currentDigest(root: string, effect: LocalWriteEffect): string | null {
   return existsSync(target) ? hashContent(readFileSync(target)) : null;
 }
 
+function readJsonDigest(root: string, path: string): string | null {
+  const target = assertSafeTarget(root, path);
+  if (!existsSync(target)) return null;
+  try {
+    return digestCanonical(JSON.parse(readFileSync(target, 'utf8')));
+  } catch {
+    throw new Error(`Bound ${path} is not valid JSON.`);
+  }
+}
+
+function assertPlanBindings(root: string, plan: OperationPlan): void {
+  const manifestEffect = plan.localEffects.find(({ path }) => path === 'threadlabs.config.json');
+  const manifestTarget = assertSafeTarget(root, 'threadlabs.config.json');
+  const manifestFileDigest = existsSync(manifestTarget)
+    ? hashContent(readFileSync(manifestTarget))
+    : null;
+  const manifestDigest = readJsonDigest(root, 'threadlabs.config.json');
+  const effectMatchesBinding =
+    manifestEffect !== undefined &&
+    digestCanonical(JSON.parse(manifestEffect.content)) === plan.manifestDigest;
+  if (manifestDigest === null) {
+    if (!effectMatchesBinding) {
+      throw new Error('Bound manifest is unavailable or changed after preview.');
+    }
+  } else if (
+    manifestDigest !== plan.manifestDigest &&
+    (!effectMatchesBinding || manifestFileDigest !== manifestEffect?.expectedPreimage)
+  ) {
+    throw new Error('Bound manifest changed after preview.');
+  }
+
+  const lockEffect = plan.localEffects.find(({ path }) => path === '.threadlabs.lock.json');
+  const lockTarget = assertSafeTarget(root, '.threadlabs.lock.json');
+  const lockFileDigest = existsSync(lockTarget) ? hashContent(readFileSync(lockTarget)) : null;
+  const priorLockDigest = readJsonDigest(root, '.threadlabs.lock.json');
+  const isPlannedPostcondition =
+    lockEffect !== undefined && lockFileDigest === lockEffect.postconditionDigest;
+  if (plan.lockDigest === null) {
+    if (priorLockDigest !== null && !isPlannedPostcondition) {
+      throw new Error('Bound lock changed after preview.');
+    }
+  } else if (priorLockDigest !== plan.lockDigest && !isPlannedPostcondition) {
+    throw new Error('Bound lock changed after preview.');
+  }
+}
+
 export function applyOperationPlan(
   root: string,
   plan: OperationPlan,
@@ -32,14 +78,19 @@ export function applyOperationPlan(
   if (actualPlanDigest !== approvedDigest) throw new Error('Approved plan digest does not match.');
   if (fingerprintRoot(root) !== plan.targetFingerprint)
     throw new Error('Target root fingerprint changed.');
+  assertPlanBindings(root, plan);
   if (plan.remoteEffects.length > 0) {
     throw new Error('Remote effects require a separately approved remote operation.');
   }
 
   const journal = readJournal(root, approvedDigest);
   const succeeded = new Set(
-    journal.filter((event) => event.state === 'succeeded').map((event) => event.effectId),
+    journal
+      .filter((event) => event.state === 'succeeded' || event.state === 'skipped')
+      .map((event) => event.effectId),
   );
+  const journaled = new Set(journal.map((event) => event.effectId));
+  const recoverableSkips: LocalWriteEffect[] = [];
   let allSatisfied = true;
   for (const effect of plan.localEffects) {
     const current = currentDigest(root, effect);
@@ -49,11 +100,34 @@ export function applyOperationPlan(
       }
       continue;
     }
-    if (current === effect.postconditionDigest) continue;
+    if (current === effect.postconditionDigest) {
+      if (journaled.has(effect.id)) recoverableSkips.push(effect);
+      continue;
+    }
     allSatisfied = false;
     if (current !== effect.expectedPreimage) {
+      appendJournal(root, {
+        runId: crypto.randomUUID(),
+        planDigest: approvedDigest,
+        effectId: effect.id,
+        state: 'blocked',
+        recordedAt: new Date().toISOString(),
+        responseClass: 'preimage-drift',
+      });
       throw new Error(`Expected preimage changed before apply: ${effect.path}`);
     }
+  }
+  for (const effect of recoverableSkips) {
+    appendJournal(root, {
+      runId: crypto.randomUUID(),
+      planDigest: approvedDigest,
+      effectId: effect.id,
+      state: 'skipped',
+      recordedAt: new Date().toISOString(),
+      responseClass: 'postcondition-already-satisfied',
+      postcondition: effect.postconditionDigest,
+    });
+    succeeded.add(effect.id);
   }
   if (allSatisfied) {
     return { state: 'no-op', appliedEffects: 0, resumedEffects: succeeded.size };
@@ -68,6 +142,16 @@ export function applyOperationPlan(
       throw new Error('Target root fingerprint changed.');
     if (currentDigest(root, effect) !== effect.expectedPreimage) {
       throw new Error(`Expected preimage changed during apply: ${effect.path}`);
+    }
+    if (!journaled.has(effect.id)) {
+      appendJournal(root, {
+        runId,
+        planDigest: approvedDigest,
+        effectId: effect.id,
+        state: 'pending',
+        recordedAt: new Date().toISOString(),
+        requestFingerprint: effect.postconditionDigest,
+      });
     }
     appendJournal(root, {
       runId,

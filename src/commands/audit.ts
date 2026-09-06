@@ -9,8 +9,14 @@ export function auditCommand(options: CommandOptions): CommandResult {
     ...(config === undefined ? {} : { config }),
     ...(lock === undefined ? {} : { lock }),
   });
+  const exceptedControls = new Set(
+    report.findings.filter(({ state }) => state === 'exception').map(({ controlId }) => controlId),
+  );
   const actionable = report.findings.some(
-    (finding) => finding.state !== 'conformant' && finding.state !== 'exception',
+    (finding) =>
+      finding.state !== 'conformant' &&
+      finding.state !== 'exception' &&
+      !exceptedControls.has(finding.controlId),
   );
   return {
     command: 'audit',

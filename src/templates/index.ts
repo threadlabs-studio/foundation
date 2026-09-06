@@ -73,7 +73,7 @@ corepack pnpm verify:pr
     }
   },
   "files": ["dist"],
-  "engines": { "node": ">=22.13" },
+  "engines": { "node": ">=22.13 <23 || >=24 <25" },
   "packageManager": "pnpm@11.25.0",
   "scripts": {
     "clean": "node --input-type=module --eval \\\"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\\\"",
@@ -262,6 +262,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 1
+      semver-major-days: 30
+      semver-minor-days: 1
+      semver-patch-days: 1
     groups:
       compatible:
         update-types: [minor, patch]
@@ -451,17 +456,22 @@ function missing(result) {
 const root = resolve('.');
 for (const candidate of packages(root)) {
   const id = candidate.manifest.name + '@' + candidate.manifest.version;
-  const packed = run('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], candidate.root);
+  const packed = run('npm', ['pack', '--json'], candidate.root);
   if (packed.status !== 0) throw new Error('Cannot inspect ' + id + ': ' + packed.stderr);
-  const expected = JSON.parse(packed.stdout)[0]?.integrity;
-  if (!expected) throw new Error('npm pack did not report integrity for ' + id);
+  const packageFile = JSON.parse(packed.stdout)[0];
+  const expected = packageFile?.integrity;
+  if (!expected || !packageFile.filename) throw new Error('npm pack did not report integrity for ' + id);
 
   const observed = run('npm', ['view', id, 'dist.integrity', '--json'], candidate.root);
   if (observed.status === 0) {
     const actual = JSON.parse(observed.stdout);
     if (actual !== expected) throw new Error('Immutable registry conflict for ' + id);
   } else if (missing(observed)) {
-    const published = run('npm', ['publish', '--provenance', '--access', 'public'], candidate.root);
+    const published = run(
+      'npm',
+      ['publish', packageFile.filename, '--provenance', '--access', 'public'],
+      candidate.root,
+    );
     if (published.status !== 0) throw new Error('Publication failed for ' + id + ': ' + published.stderr);
   } else {
     throw new Error('Registry state is unknown for ' + id + ': ' + observed.stderr);

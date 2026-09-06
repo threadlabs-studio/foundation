@@ -4,6 +4,7 @@ import {
   DEFAULT_PLAN_FILE,
   loadConfig,
   loadLock,
+  summarizeSelection,
   writePlan,
 } from './context.js';
 import type { CommandOptions, CommandResult } from './types.js';
@@ -39,6 +40,7 @@ export function planCommand(options: CommandOptions): CommandResult {
       digest: planned.digest,
       planFile,
       effects: planned.plan.localEffects.map(({ id, path }) => ({ id, path })),
+      selection: summarizeSelection(config),
     },
   };
 }

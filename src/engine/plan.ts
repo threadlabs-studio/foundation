@@ -7,6 +7,7 @@ import { renderTemplate, type TemplateContext } from '../templates/index.js';
 import { fingerprintRoot, hashContent } from './fingerprint.js';
 import { assertSafeTarget } from './ownership.js';
 import { releaseArtifacts } from './release.js';
+import { ownedContentDigest, renderManagedSection } from './sections.js';
 
 export interface PlannedOperation {
   readonly plan: OperationPlan;
@@ -38,8 +39,16 @@ export function createOperationPlan(
   currentLock?: ThreadlabsLock,
 ): PlannedOperation {
   const snapshot = snapshotRepository(root);
+  if (snapshot.caseCollisions.length > 0) {
+    throw new Error(
+      `Case-collision ambiguity must be resolved before planning: ${snapshot.caseCollisions
+        .flat()
+        .join(', ')}`,
+    );
+  }
   const selection = resolveSelection({ bundles: config.bundles, modules: config.modules });
   const desired = new Map<string, string>();
+  const artifactStages = new Map<string, string>();
   for (const module of selection.modules) {
     for (const artifact of module.artifacts) {
       assertSafeTarget(root, artifact.path);
@@ -49,6 +58,10 @@ export function createOperationPlan(
         throw new Error(`Modules disagree about managed artifact: ${artifact.path}`);
       }
       desired.set(artifact.path, content);
+      const owningStage = module.stages.find((candidate) =>
+        candidate.artifactPaths.includes(artifact.path),
+      );
+      if (owningStage !== undefined) artifactStages.set(artifact.path, owningStage.id);
     }
   }
   if (selection.moduleIds.includes('npm-publish')) {
@@ -60,25 +73,54 @@ export function createOperationPlan(
         throw new Error(`Modules disagree about managed artifact: ${artifact.path}`);
       }
       desired.set(artifact.path, content);
+      artifactStages.set(artifact.path, 'npm-publish.install');
     }
   }
 
-  const manifest = normalizedConfig(config, [...desired.keys()]);
-  const ownership = new Map(manifest.ownership.map((grant) => [grant.path, grant.mode]));
+  const allArtifactPaths = [...desired.keys()];
+  const manifest = normalizedConfig(config, allArtifactPaths);
+  const ownership = new Map(manifest.ownership.map((grant) => [grant.path, grant]));
+  const isPartialStage = stage !== 'all' && stage !== 'upgrade';
   for (const path of desired.keys()) {
-    const mode = ownership.get(path);
+    const grant = ownership.get(path);
+    const mode = grant?.mode;
     if (mode === 'local' || mode === 'unmanaged') desired.delete(path);
     if (mode === 'ambiguous') throw new Error(`Ownership is ambiguous for artifact: ${path}`);
+    if (mode === 'section-managed') {
+      if (grant?.anchors === undefined) throw new Error(`Section anchors are required: ${path}`);
+      desired.set(
+        path,
+        renderManagedSection(snapshot.files.get(path), desired.get(path)!, grant.anchors),
+      );
+    }
+  }
+  const validManagedPaths = new Set(desired.keys());
+  if (isPartialStage) {
+    const knownStage = selection.modules.some((module) =>
+      module.stages.some((candidate) => candidate.id === stage),
+    );
+    if (!knownStage) throw new Error(`Unknown or inapplicable adoption stage: ${stage}`);
+    for (const path of desired.keys()) {
+      if (artifactStages.get(path) !== stage) desired.delete(path);
+    }
   }
   const manifestContent = canonicalJson(manifest);
+  const planManifestDigest = digestCanonical(manifest);
   desired.set('threadlabs.config.json', manifestContent);
+  const artifactDigests = new Map<string, string>();
+  if (isPartialStage) {
+    for (const [path, digest] of Object.entries(currentLock?.artifacts ?? {})) {
+      if (validManagedPaths.has(path)) artifactDigests.set(path, digest);
+    }
+  }
+  for (const [path, content] of desired) {
+    artifactDigests.set(path, ownedContentDigest(content, ownership.get(path)));
+  }
   const lock: ThreadlabsLock = {
     schemaVersion: '1.0',
     standardVersion: manifest.standardVersion,
     modules: Object.fromEntries(selection.modules.map((module) => [module.id, module.version])),
-    artifacts: Object.fromEntries(
-      [...desired.entries()].map(([path, content]) => [path, hashContent(content)]),
-    ),
+    artifacts: Object.fromEntries(artifactDigests),
   };
   desired.set('.threadlabs.lock.json', canonicalJson(lock));
 
@@ -89,12 +131,21 @@ export function createOperationPlan(
     const expectedPreimage = existing === undefined ? null : hashContent(existing);
     if (existing !== undefined) {
       const managed =
-        ownership.get(path) === 'managed' || ownership.get(path) === 'section-managed';
+        ownership.get(path)?.mode === 'managed' || ownership.get(path)?.mode === 'section-managed';
       const locked =
         path === '.threadlabs.lock.json' && currentLock !== undefined
           ? hashContent(canonicalJson(currentLock))
           : currentLock?.artifacts[path];
-      if (!managed || locked !== expectedPreimage) {
+      const actualOwnedDigest = ownedContentDigest(existing, ownership.get(path));
+      let authoredManifestMatches = false;
+      if (path === 'threadlabs.config.json') {
+        try {
+          authoredManifestMatches = digestCanonical(JSON.parse(existing)) === planManifestDigest;
+        } catch {
+          authoredManifestMatches = false;
+        }
+      }
+      if (!managed || (!authoredManifestMatches && locked !== actualOwnedDigest)) {
         throw new Error(`Ownership is ambiguous for existing path: ${path}`);
       }
     }
@@ -119,7 +170,7 @@ export function createOperationPlan(
     standardVersion: manifest.standardVersion,
     targetRoot: '.',
     targetFingerprint: fingerprintRoot(root),
-    manifestDigest: digestCanonical(manifest),
+    manifestDigest: planManifestDigest,
     lockDigest: currentLock === undefined ? null : digestCanonical(currentLock),
     stage,
     observations: [],

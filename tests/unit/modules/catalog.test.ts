@@ -66,6 +66,16 @@ describe('built-in catalog', () => {
     );
   });
 
+  it('orders dependencies before dependent adoption stages', () => {
+    const selected = resolveSelection({ bundles: ['typescript-library'], modules: [] });
+    expect(selected.moduleIds.indexOf('core')).toBeLessThan(
+      selected.moduleIds.indexOf('typescript-node'),
+    );
+    expect(selected.moduleIds.indexOf('github')).toBeLessThan(
+      selected.moduleIds.indexOf('freshness'),
+    );
+  });
+
   it('renders every built-in template without unresolved fields', () => {
     for (const name of templateNames()) {
       const rendered = renderTemplate(name, {

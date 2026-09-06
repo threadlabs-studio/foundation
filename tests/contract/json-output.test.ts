@@ -39,4 +39,25 @@ describe('machine output contract', () => {
       expect.objectContaining({ status: 'invalid-input', exitClass: 'invalidInput' }),
     );
   });
+
+  it('keeps human findings traceable to the same control IDs as JSON', () => {
+    const root = mkdtempSync(join(tmpdir(), 'threadlabs-json-'));
+    roots.push(root);
+    let json = '';
+    let human = '';
+    runCli(['audit', root, '--json'], {
+      stdout: (message) => (json += message),
+      stderr: () => undefined,
+    });
+    runCli(['audit', root], {
+      stdout: (message) => (human += message),
+      stderr: () => undefined,
+    });
+    const envelope = JSON.parse(json) as {
+      data: { findings: readonly { controlId: string }[] };
+    };
+    for (const controlId of new Set(envelope.data.findings.map((finding) => finding.controlId))) {
+      expect(human).toContain(controlId);
+    }
+  });
 });

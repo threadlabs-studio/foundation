@@ -70,7 +70,7 @@ corepack pnpm dlx github:threadlabs-studio/foundation --help
 
 ## Develop Foundation
 
-Foundation supports Node.js 22.13+ and Node 24 and pins pnpm through Corepack.
+Foundation supports Node.js 22.13 through the Node 22 line and Node 24, and pins pnpm through Corepack.
 
 ```sh
 corepack pnpm install --frozen-lockfile

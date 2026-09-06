@@ -11,6 +11,16 @@
   "bundles": ["typescript-library"],
   "modules": [],
   "exceptions": [],
+  "freshness": {
+    "holds": [
+      {
+        "name": "@types/node",
+        "reason": "Type declarations target the minimum supported Node line.",
+        "owner": "Project Contributors",
+        "reviewDate": "2027-01-31"
+      }
+    ]
+  },
   "ownership": [],
   "release": { "strategy": "single-package" },
   "settings": {
@@ -23,6 +33,8 @@
 ```
 
 The guided `init`, `--config`, and explicit `--bundle`/`--module` paths produce the same manifest and plan. `init` accepts `--name`, `--description`, `--owner`, repeated `--bundle`, and repeated `--module` flags. It only previews; use `apply` with the returned plan path and digest to write project files.
+
+`freshness.holds` records deliberate package-version constraints. Each hold requires a reason, owner, and review date; an expired hold becomes a stale finding. The generated TypeScript library records why `@types/node` follows the minimum supported runtime line rather than the newest line.
 
 ## Modules
 

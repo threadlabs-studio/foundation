@@ -3,6 +3,16 @@
     "typescript-library"
   ],
   "exceptions": [],
+  "freshness": {
+    "holds": [
+      {
+        "name": "@types/node",
+        "owner": "Threadlabs Studio",
+        "reason": "Type declarations intentionally target the minimum supported Node line.",
+        "reviewDate": "2027-01-31"
+      }
+    ]
+  },
   "modules": [
     "cross-platform"
   ],

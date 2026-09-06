@@ -5,6 +5,7 @@ import { atomicWriteFile } from '../adapters/atomic-filesystem.js';
 import { canonicalJson } from '../domain/canonicalize.js';
 import { validateConfig, type ThreadlabsConfig, type ThreadlabsLock } from '../domain/config.js';
 import type { OperationPlan } from '../domain/operation.js';
+import { resolveSelection } from '../modules/catalog.js';
 import type { TemplateContext } from '../templates/index.js';
 
 export const STANDARD_VERSION = '1.0.0';
@@ -40,6 +41,40 @@ export function contextFromConfig(config: ThreadlabsConfig): TemplateContext {
         ? settings.licenseYear
         : new Date().getUTCFullYear(),
   };
+}
+
+export function summarizeSelection(config: ThreadlabsConfig): {
+  readonly modules: readonly {
+    readonly id: string;
+    readonly title: string;
+    readonly dependencies: readonly string[];
+    readonly controls: readonly {
+      readonly id: string;
+      readonly lane: string;
+      readonly expectedSeconds: number;
+      readonly applicability: string;
+    }[];
+  }[];
+  readonly estimatedSecondsByLane: Readonly<Record<string, number>>;
+} {
+  const selection = resolveSelection({ bundles: config.bundles, modules: config.modules });
+  const estimatedSecondsByLane: Record<string, number> = {};
+  const modules = selection.modules.map((module) => ({
+    id: module.id,
+    title: module.title,
+    dependencies: module.dependencies,
+    controls: module.controls.map((control) => {
+      estimatedSecondsByLane[control.lane] =
+        (estimatedSecondsByLane[control.lane] ?? 0) + control.cost.expectedSeconds;
+      return {
+        id: control.id,
+        lane: control.lane,
+        expectedSeconds: control.cost.expectedSeconds,
+        applicability: control.applicability,
+      };
+    }),
+  }));
+  return { modules, estimatedSecondsByLane };
 }
 
 export interface PersistedPlan {

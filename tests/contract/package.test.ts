@@ -73,12 +73,16 @@ describe('public package contract', () => {
     };
 
     expect(sourceManifest.devEngines).toEqual({
-      runtime: { name: 'node', version: '>=24', onFail: 'warn' },
+      runtime: { name: 'node', version: '>=24 <25', onFail: 'warn' },
     });
     expect(sourceManifest.packageManager).toBe('pnpm@11.25.0');
-    expect(sourceManifest.dependencies).toEqual({ '@inquirer/prompts': '8.7.1' });
+    expect(sourceManifest.dependencies).toEqual({
+      '@inquirer/prompts': '8.7.1',
+      semver: '7.8.5',
+    });
     expect(sourceManifest.devDependencies).toEqual({
       '@types/node': '22.20.1',
+      '@types/semver': '7.8.0',
       oxlint: '1.81.0',
       prettier: '3.9.6',
       typescript: '7.0.2',
@@ -169,9 +173,12 @@ describe('public package contract', () => {
     };
     expect(installedManifest.exports).toBeDefined();
     expect(installedManifest.bin).toEqual({ threadlabs: './dist/cli.js' });
-    expect(installedManifest.engines).toEqual({ node: '>=22.13' });
+    expect(installedManifest.engines).toEqual({ node: '>=22.13 <23 || >=24 <25' });
     expect(installedManifest.files).toEqual(['dist', 'schemas', 'templates']);
-    expect(installedManifest.dependencies).toEqual({ '@inquirer/prompts': '8.7.1' });
+    expect(installedManifest.dependencies).toEqual({
+      '@inquirer/prompts': '8.7.1',
+      semver: '7.8.5',
+    });
     expect(installedManifest.license).toBe('MIT');
     expect(installedManifest.repository?.url).toBe(
       'git+https://github.com/threadlabs-studio/foundation.git',

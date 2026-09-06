@@ -35,6 +35,16 @@ export function upgradeCommand(options: CommandOptions): CommandResult {
       digest: planned.digest,
       planFile: DEFAULT_PLAN_FILE,
       effects: planned.plan.localEffects,
+      policyChanges: planned.plan.localEffects
+        .filter(({ path }) => !['threadlabs.config.json', '.threadlabs.lock.json'].includes(path))
+        .map(({ path }) => path),
+      versionRefresh: {
+        from: current.standardVersion,
+        to: STANDARD_VERSION,
+        metadataPaths: planned.plan.localEffects
+          .filter(({ path }) => ['threadlabs.config.json', '.threadlabs.lock.json'].includes(path))
+          .map(({ path }) => path),
+      },
     },
   };
 }

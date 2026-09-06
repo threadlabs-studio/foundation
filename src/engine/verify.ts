@@ -20,6 +20,7 @@ const checks: readonly VerificationCheck[] = [
   { id: 'typecheck', script: 'typecheck', lane: 'inner' },
   { id: 'test', script: 'test', lane: 'inner' },
   { id: 'build', script: 'build', lane: 'inner' },
+  { id: 'package', script: 'test:package', lane: 'pr', module: 'public-api' },
   { id: 'browser', script: 'test:browser', lane: 'extended', module: 'browser' },
   {
     id: 'cross-platform',

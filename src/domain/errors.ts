@@ -6,6 +6,7 @@ export interface ValidationIssue {
     | 'invalid_review_date'
     | 'invalid_type'
     | 'required'
+    | 'unknown_property'
     | 'unknown_dependency'
     | 'unsupported_schema';
   readonly path: string;

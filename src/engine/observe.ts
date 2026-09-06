@@ -6,7 +6,12 @@ export function observationFromExternal(evidence: ExternalEvidence): Observation
     source: evidence.source,
     observedAt: evidence.observedAt,
     state: evidence.state === 'available' ? 'present' : 'unknown',
-    freshness: evidence.state === 'stale' ? 'stale' : 'fresh',
+    freshness:
+      evidence.state === 'stale'
+        ? 'stale'
+        : evidence.state === 'available'
+          ? 'fresh'
+          : 'not-applicable',
     ...(evidence.normalized === undefined ? {} : { value: evidence.normalized }),
     ...(evidence.details === undefined ? {} : { details: evidence.details }),
   };
