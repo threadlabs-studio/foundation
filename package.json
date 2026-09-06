@@ -1,0 +1,74 @@
+{
+  "name": "threadlabs",
+  "version": "0.0.0",
+  "description": "An executable, evidence-based standard for open-source repositories.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/threadlabs-studio/foundation.git"
+  },
+  "homepage": "https://github.com/threadlabs-studio/foundation#readme",
+  "bugs": {
+    "url": "https://github.com/threadlabs-studio/foundation/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "threadlabs": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24",
+      "onFail": "warn"
+    }
+  },
+  "packageManager": "pnpm@11.25.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "node --input-type=module --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\"",
+    "build": "pnpm clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "oxlint src tests vitest.config.ts",
+    "format:check": "prettier --check package.json pnpm-workspace.yaml tsconfig.json tsconfig.build.json oxlint.json prettier.config.mjs vitest.config.ts \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "test": "vitest run",
+    "test:contracts": "vitest run tests/contract",
+    "verify:inner": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build && pnpm test:contracts",
+    "verify:pr": "pnpm verify:inner && pnpm test",
+    "verify:extended": "pnpm verify:pr",
+    "verify:release": "pnpm verify:pr",
+    "prepack": "pnpm build",
+    "prethreadlabs": "pnpm build",
+    "threadlabs": "node ./dist/cli.js"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "8.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "oxlint": "1.81.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}
