@@ -31,6 +31,8 @@ Commands:
   upgrade      Preview a standard-version upgrade
   explain      Explain modules and their controls
   clean        Remove saved preview plans (journals are retained)
+  verify       Run a bounded verification lane and emit evidence
+  freshness    Report dependency update and lifecycle states
   help         Show this help
 
 Options:
@@ -60,6 +62,8 @@ export function runCli(arguments_: readonly string[], io: CliIo = processIo): nu
     'upgrade',
     'explain',
     'clean',
+    'verify',
+    'freshness',
   ]);
   if (!known.has(command)) {
     io.stderr(`Unknown command: ${command}\nRun "threadlabs --help" for usage.\n`);
@@ -86,6 +90,8 @@ export function runCli(arguments_: readonly string[], io: CliIo = processIo): nu
         plan: { type: 'string' },
         digest: { type: 'string' },
         stage: { type: 'string' },
+        lane: { type: 'string' },
+        offline: { type: 'boolean' },
       },
     });
     const subject = parsed.positionals[0];

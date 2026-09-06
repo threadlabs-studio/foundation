@@ -16,3 +16,5 @@ export * from './engine/audit.js';
 export * from './engine/apply.js';
 export * from './engine/plan.js';
 export type { CommandResult } from './commands/types.js';
+export * from './engine/freshness.js';
+export * from './engine/verify.js';
