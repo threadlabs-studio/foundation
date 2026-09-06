@@ -6,6 +6,7 @@ import { resolveSelection } from '../modules/catalog.js';
 import { renderTemplate, type TemplateContext } from '../templates/index.js';
 import { fingerprintRoot, hashContent } from './fingerprint.js';
 import { assertSafeTarget } from './ownership.js';
+import { releaseArtifacts } from './release.js';
 
 export interface PlannedOperation {
   readonly plan: OperationPlan;
@@ -41,6 +42,17 @@ export function createOperationPlan(
   const desired = new Map<string, string>();
   for (const module of selection.modules) {
     for (const artifact of module.artifacts) {
+      assertSafeTarget(root, artifact.path);
+      const content = renderTemplate(artifact.template, context);
+      const previous = desired.get(artifact.path);
+      if (previous !== undefined && previous !== content) {
+        throw new Error(`Modules disagree about managed artifact: ${artifact.path}`);
+      }
+      desired.set(artifact.path, content);
+    }
+  }
+  if (selection.moduleIds.includes('npm-publish')) {
+    for (const artifact of releaseArtifacts(config.release?.strategy ?? 'single-package')) {
       assertSafeTarget(root, artifact.path);
       const content = renderTemplate(artifact.template, context);
       const previous = desired.get(artifact.path);

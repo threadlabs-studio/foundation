@@ -6,6 +6,7 @@ import { freshnessCommand } from './freshness.js';
 import { githubCommand } from './github.js';
 import { initCommand } from './init.js';
 import { planCommand } from './plan.js';
+import { releaseCommand } from './release.js';
 import { statusCommand } from './status.js';
 import type { CommandOptions, CommandResult } from './types.js';
 import { upgradeCommand } from './upgrade.js';
@@ -37,6 +38,8 @@ export function dispatchCommand(command: string, options: CommandOptions): Comma
       return freshnessCommand(options);
     case 'github':
       return githubCommand(options);
+    case 'release':
+      return releaseCommand(options);
     default:
       throw new Error(`Unknown command: ${command}`);
   }

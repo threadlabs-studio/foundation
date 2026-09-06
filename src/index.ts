@@ -19,3 +19,4 @@ export type { CommandResult } from './commands/types.js';
 export * from './engine/freshness.js';
 export * from './engine/verify.js';
 export * from './engine/github-policy.js';
+export * from './engine/release.js';

@@ -34,6 +34,7 @@ Commands:
   verify       Run a bounded verification lane and emit evidence
   freshness    Report dependency update and lifecycle states
   github       Audit, plan, or separately apply GitHub settings
+  release      Validate a release locally without publishing
   help         Show this help
 
 Options:
@@ -66,6 +67,7 @@ export function runCli(arguments_: readonly string[], io: CliIo = processIo): nu
     'verify',
     'freshness',
     'github',
+    'release',
   ]);
   if (!known.has(command)) {
     io.stderr(`Unknown command: ${command}\nRun "threadlabs --help" for usage.\n`);

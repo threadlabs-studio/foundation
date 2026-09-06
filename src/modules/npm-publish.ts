@@ -9,8 +9,5 @@ export const npmPublishModule = defineModule({
   lane: 'release',
   expectedSeconds: 240,
   dependencies: ['core', 'typescript-node', 'github'],
-  artifacts: [
-    { path: '.github/workflows/release.yml', ownership: 'managed', template: 'github/release' },
-    { path: 'CHANGELOG.md', ownership: 'managed', template: 'npm/changelog' },
-  ],
+  artifacts: [{ path: 'CHANGELOG.md', ownership: 'managed', template: 'npm/changelog' }],
 });
