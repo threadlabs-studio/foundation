@@ -17,12 +17,16 @@ const unorderedCollectionKeys = new Set([
   'skippedControls',
 ]);
 
+export function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function normalize(value: unknown, parentKey?: string): unknown {
   if (Array.isArray(value)) {
     const normalized = value.map((item) => normalize(item));
     if (parentKey !== undefined && unorderedCollectionKeys.has(parentKey)) {
       return normalized.toSorted((left, right) =>
-        JSON.stringify(left).localeCompare(JSON.stringify(right), 'en'),
+        compareText(JSON.stringify(left), JSON.stringify(right)),
       );
     }
     return normalized;
@@ -31,7 +35,7 @@ function normalize(value: unknown, parentKey?: string): unknown {
     return Object.fromEntries(
       Object.entries(value)
         .filter(([, item]) => item !== undefined)
-        .toSorted(([left], [right]) => left.localeCompare(right, 'en'))
+        .toSorted(([left], [right]) => compareText(left, right))
         .map(([key, item]) => [key, normalize(item, key)]),
     );
   }

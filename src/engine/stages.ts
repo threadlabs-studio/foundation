@@ -1,4 +1,5 @@
 import type { ModuleDefinition } from '../domain/module.js';
+import { compareText } from '../domain/canonicalize.js';
 
 export interface AuditStage {
   readonly id: string;
@@ -19,12 +20,12 @@ export function buildAuditStages(
         id: stage.id,
         title: stage.title,
         moduleId: module.id,
-        artifactPaths: [...stage.artifactPaths].toSorted(),
+        artifactPaths: [...stage.artifactPaths].toSorted(compareText),
         blockedPaths: stage.artifactPaths
           .filter((path) => existingPaths.has(path) && !managedPaths.has(path))
-          .toSorted(),
+          .toSorted(compareText),
       })),
     )
     .filter((stage) => stage.artifactPaths.length > 0)
-    .toSorted((left, right) => left.id.localeCompare(right.id, 'en'));
+    .toSorted((left, right) => compareText(left.id, right.id));
 }

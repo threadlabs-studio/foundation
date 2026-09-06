@@ -1,4 +1,5 @@
 import type { ModuleDefinition } from '../domain/module.js';
+import { compareText } from '../domain/canonicalize.js';
 import { agentsModule } from './agents.js';
 import { browserModule } from './browser.js';
 import { BUILT_IN_BUNDLES } from './bundles.js';
@@ -35,7 +36,7 @@ const modules = [
 const catalog = new Map<string, ModuleDefinition>(modules.map((module) => [module.id, module]));
 const bundles = new Map(BUILT_IN_BUNDLES.map((bundle) => [bundle.id, bundle]));
 
-export const BUILT_IN_MODULE_IDS = [...catalog.keys()].toSorted();
+export const BUILT_IN_MODULE_IDS = [...catalog.keys()].toSorted(compareText);
 
 export function getBuiltInModule(id: string): ModuleDefinition {
   const module = catalog.get(id);
@@ -71,12 +72,12 @@ export function resolveSelection(selection: ModuleSelection): ResolvedSelection 
     if (visiting.has(id)) throw new Error(`Circular module dependency at ${id}`);
     visiting.add(id);
     const module = getBuiltInModule(id);
-    module.dependencies.toSorted().forEach(visit);
+    module.dependencies.toSorted(compareText).forEach(visit);
     visiting.delete(id);
     resolved.add(id);
   };
-  [...requested].toSorted().forEach(visit);
-  const moduleIds = [...resolved].toSorted();
+  [...requested].toSorted(compareText).forEach(visit);
+  const moduleIds = [...resolved].toSorted(compareText);
   for (const id of moduleIds) {
     const module = getBuiltInModule(id);
     const conflict = module.conflicts.find((candidate) => resolved.has(candidate));

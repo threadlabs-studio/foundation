@@ -1,5 +1,5 @@
 import { snapshotRepository, type RepositorySnapshot } from '../adapters/filesystem.js';
-import { digestCanonical } from '../domain/canonicalize.js';
+import { compareText, digestCanonical } from '../domain/canonicalize.js';
 import type { ThreadlabsConfig, ThreadlabsLock } from '../domain/config.js';
 import type { Finding } from '../domain/finding.js';
 import type { ExternalEvidence, Observation } from '../domain/observation.js';
@@ -177,9 +177,9 @@ export function auditSnapshot(
     mode,
     selectedModules,
     suggestedModules,
-    observations: observations.toSorted((left, right) => left.id.localeCompare(right.id, 'en')),
+    observations: observations.toSorted((left, right) => compareText(left.id, right.id)),
     findings: findings.toSorted((left, right) =>
-      `${left.controlId}:${left.title}`.localeCompare(`${right.controlId}:${right.title}`, 'en'),
+      compareText(`${left.controlId}:${left.title}`, `${right.controlId}:${right.title}`),
     ),
     stages: buildAuditStages(modules, new Set(snapshot.files.keys()), managedPaths),
   };
