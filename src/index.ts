@@ -9,3 +9,6 @@ export * from './domain/finding.js';
 export * from './domain/module.js';
 export * from './domain/observation.js';
 export * from './domain/operation.js';
+export * from './modules/catalog.js';
+export * from './modules/contracts.js';
+export * from './templates/index.js';

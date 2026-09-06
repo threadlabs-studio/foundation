@@ -1,0 +1,319 @@
+/* oxlint-disable no-useless-escape -- escapes are emitted into generated JSON strings */
+export interface TemplateContext {
+  readonly projectName: string;
+  readonly description: string;
+  readonly licenseHolder: string;
+}
+
+const templates: Readonly<Record<string, string>> = {
+  'core/gitignore': `node_modules/
+dist/
+coverage/
+.threadlabs/operations/
+*.tgz
+.DS_Store
+`,
+  'core/license-mit': `MIT License
+
+Copyright (c) {{year}} {{licenseHolder}}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`,
+  'core/readme': `# {{projectTitle}}
+
+{{description}}
+
+## Development
+
+\`\`\`sh
+corepack pnpm install --frozen-lockfile
+corepack pnpm verify:pr
+\`\`\`
+
+## License
+
+[MIT](LICENSE)
+`,
+  'typescript/package-json': `{
+  "name": "{{projectName}}",
+  "version": "0.0.0",
+  "description": "{{descriptionJson}}",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "engines": { "node": ">=22.13" },
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "clean": "node --input-type=module --eval \\\"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\\\"",
+    "build": "pnpm clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "oxlint src tests vitest.config.ts",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "verify:inner": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "verify:pr": "pnpm verify:inner && pnpm build",
+    "verify:extended": "pnpm verify:pr",
+    "verify:release": "pnpm verify:pr && pnpm pack --dry-run"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "oxlint": "1.81.0",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}
+`,
+  'typescript/pnpm-workspace': `# Exact exceptions for the pinned release set; other releases retain pnpm's age gate.
+minimumReleaseAgeExclude:
+  - '@vitest/mocker@5.0.0'
+  - '@vitest/spy@5.0.0'
+  - 'postcss@8.5.28'
+  - 'vitest@5.0.0'
+`,
+  'typescript/tsconfig': `{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"],
+  "exclude": ["dist", "coverage", "node_modules"]
+}
+`,
+  'typescript/tsconfig-build': `{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["tests", "dist", "coverage", "node_modules"]
+}
+`,
+  'typescript/oxlint': `{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": { "correctness": "error", "suspicious": "warn" }
+}
+`,
+  'typescript/prettier': `export default {
+  singleQuote: true,
+  trailingComma: 'all',
+  printWidth: 100,
+};
+`,
+  'typescript/vitest': `import { defineConfig } from 'vitest/config';
+
+export default defineConfig({ test: { include: ['tests/**/*.test.ts'] } });
+`,
+  'typescript/index': `export function hello(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+`,
+  'typescript/test': `import { describe, expect, it } from 'vitest';
+
+import { hello } from '../src/index.js';
+
+describe('hello', () => {
+  it('returns a greeting', () => expect(hello('world')).toBe('Hello, world!'));
+});
+`,
+  'github/ci': `name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-\${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Node \${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.13.1', '24']
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: \${{ matrix.node }}
+          cache: pnpm
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:pr
+
+  required:
+    name: Required
+    if: always()
+    needs: [verify]
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "\${{ needs.verify.result }}" = success
+`,
+  'github/dependabot': `version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      compatible:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+`,
+  'github/release': `name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:release
+      - run: npm publish --provenance --access public
+`,
+  'github/cross-platform': `name: Cross-platform
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: \${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:extended
+`,
+  'agents/root': `# Repository guidance
+
+## Authority
+
+- Treat README.md and checked-in project documentation as product authority.
+- Treat threadlabs.config.json as the repository-standard manifest.
+- Ask the owner when requirements conflict or a destructive operation is required.
+
+## Safe work
+
+- Preserve unrelated changes and never rewrite shared Git history without explicit approval.
+- Preview Foundation plans before applying them.
+- Do not edit generated or managed files without checking .threadlabs.lock.json ownership.
+
+## Verification
+
+- During development, run the smallest focused test plus \`pnpm verify:inner\`.
+- Before handoff, run \`pnpm verify:pr\` and report commands, results, skips, and remaining judgment.
+- Publication remains human-approved and runs only through the protected release workflow.
+`,
+  'generated/gitattributes': `dist/** linguist-generated=true
+*.lock linguist-generated=true
+`,
+  'docs/readme': `# Documentation
+
+This directory contains the project's maintained documentation. Document shipped behavior and keep future work clearly labeled.
+`,
+  'npm/changelog': `# Changelog
+
+All notable changes to this project will be documented in this file.
+`,
+};
+
+function titleFromName(name: string): string {
+  return name
+    .split(/[-_]/u)
+    .filter(Boolean)
+    .map((part) => `${part[0]?.toUpperCase() ?? ''}${part.slice(1)}`)
+    .join(' ');
+}
+
+export function renderTemplate(name: string, context: TemplateContext): string {
+  const template = templates[name];
+  if (template === undefined) throw new Error(`Unknown template: ${name}`);
+  const replacements: Record<string, string> = {
+    projectName: context.projectName,
+    projectTitle: titleFromName(context.projectName),
+    description: context.description,
+    descriptionJson: JSON.stringify(context.description).slice(1, -1),
+    licenseHolder: context.licenseHolder,
+    year: String(new Date().getUTCFullYear()),
+  };
+  return template.replace(/\{\{([A-Za-z]+)\}\}/gu, (_, key: string) => replacements[key] ?? '');
+}
+
+export function templateNames(): readonly string[] {
+  return Object.keys(templates).toSorted();
+}
