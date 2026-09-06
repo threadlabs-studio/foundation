@@ -33,6 +33,15 @@ describe('bounded command runner', () => {
     );
   });
 
+  it('redacts home paths and credential-shaped output', () => {
+    const result = runBoundedCommand(
+      'node',
+      ['--eval', 'process.stdout.write(`${process.env.HOME} gho_abcdefghijklmno`)'],
+      '.',
+    );
+    expect(result.stdout).toBe('<home> <redacted>');
+  });
+
   it('reports timeout and pre-cancellation distinctly', () => {
     const root = mkdtempSync(join(tmpdir(), 'threadlabs-command-'));
     roots.push(root);

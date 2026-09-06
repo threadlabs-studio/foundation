@@ -3,6 +3,7 @@ import { auditCommand } from './audit.js';
 import { cleanCommand } from './clean.js';
 import { explainCommand } from './explain.js';
 import { freshnessCommand } from './freshness.js';
+import { githubCommand } from './github.js';
 import { initCommand } from './init.js';
 import { planCommand } from './plan.js';
 import { statusCommand } from './status.js';
@@ -34,6 +35,8 @@ export function dispatchCommand(command: string, options: CommandOptions): Comma
       return verifyCommand(options);
     case 'freshness':
       return freshnessCommand(options);
+    case 'github':
+      return githubCommand(options);
     default:
       throw new Error(`Unknown command: ${command}`);
   }

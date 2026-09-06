@@ -33,6 +33,7 @@ Commands:
   clean        Remove saved preview plans (journals are retained)
   verify       Run a bounded verification lane and emit evidence
   freshness    Report dependency update and lifecycle states
+  github       Audit, plan, or separately apply GitHub settings
   help         Show this help
 
 Options:
@@ -64,6 +65,7 @@ export function runCli(arguments_: readonly string[], io: CliIo = processIo): nu
     'clean',
     'verify',
     'freshness',
+    'github',
   ]);
   if (!known.has(command)) {
     io.stderr(`Unknown command: ${command}\nRun "threadlabs --help" for usage.\n`);
@@ -92,6 +94,10 @@ export function runCli(arguments_: readonly string[], io: CliIo = processIo): nu
         stage: { type: 'string' },
         lane: { type: 'string' },
         offline: { type: 'boolean' },
+        repository: { type: 'string' },
+        action: { type: 'string' },
+        collaborative: { type: 'boolean' },
+        'remote-approve': { type: 'boolean' },
       },
     });
     const subject = parsed.positionals[0];

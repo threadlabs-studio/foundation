@@ -2,12 +2,13 @@ import { spawnSync } from 'node:child_process';
 
 import type { VerificationResultState } from '../domain/control.js';
 
-const allowedExecutables = new Set(['git', 'node', 'npm', 'pnpm']);
+const allowedExecutables = new Set(['gh', 'git', 'node', 'npm', 'pnpm']);
 
 export interface BoundedCommandOptions {
   readonly timeoutMs?: number;
   readonly maxOutputBytes?: number;
   readonly canceled?: () => boolean;
+  readonly input?: string;
 }
 
 export interface BoundedCommandResult {
@@ -61,6 +62,7 @@ export function runBoundedCommand(
       CI: '1',
       FORCE_COLOR: '0',
     },
+    ...(options.input === undefined ? {} : { input: options.input }),
   });
   const rawOutput = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   const truncated = Buffer.byteLength(rawOutput) > maxOutputBytes;

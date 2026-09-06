@@ -18,3 +18,4 @@ export * from './engine/plan.js';
 export type { CommandResult } from './commands/types.js';
 export * from './engine/freshness.js';
 export * from './engine/verify.js';
+export * from './engine/github-policy.js';
