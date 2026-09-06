@@ -12,3 +12,4 @@ export * from './domain/operation.js';
 export * from './modules/catalog.js';
 export * from './modules/contracts.js';
 export * from './templates/index.js';
+export * from './engine/audit.js';
