@@ -14,6 +14,7 @@ import { npmPublishModule } from './npm-publish.js';
 import { performanceModule } from './performance.js';
 import { publicApiModule } from './public-api.js';
 import { typescriptNodeModule } from './typescript-node.js';
+import { webCssResetModule } from './web-css-reset.js';
 
 export { TYPESCRIPT_LIBRARY_BUNDLE } from './bundles.js';
 
@@ -31,6 +32,7 @@ const modules = [
   performanceModule,
   publicApiModule,
   typescriptNodeModule,
+  webCssResetModule,
 ] as const;
 
 const catalog = new Map<string, ModuleDefinition>(modules.map((module) => [module.id, module]));

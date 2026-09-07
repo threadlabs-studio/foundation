@@ -91,6 +91,25 @@ describe('operation planning', () => {
     expect(paths).not.toContain('package.json');
   });
 
+  it('materializes the web reset module as a managed stylesheet with its core dependency', () => {
+    const root = mkdtempSync(join(tmpdir(), 'threadlabs-plan-'));
+    roots.push(root);
+    const planned = createOperationPlan(root, makeConfig(['web-css-reset']), {
+      projectName: 'sample-web-app',
+      description: 'A sample web application.',
+      licenseHolder: 'Sample Authors',
+    });
+    const reset = planned.plan.localEffects.find(({ path }) => path === 'src/styles/reset.css');
+    const lockEffect = planned.plan.localEffects.find(
+      ({ path }) => path === '.threadlabs.lock.json',
+    );
+    const lock = JSON.parse(lockEffect?.content ?? '{}') as ThreadlabsLock;
+
+    expect(reset?.content).toContain('@layer reset');
+    expect(lock.modules).toMatchObject({ core: '1.0.0', 'web-css-reset': '1.0.0' });
+    expect(lock.artifacts).toHaveProperty('src/styles/reset.css');
+  });
+
   it('retains earlier managed digests while adopting the next stage', () => {
     const root = mkdtempSync(join(tmpdir(), 'threadlabs-plan-'));
     roots.push(root);

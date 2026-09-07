@@ -40,7 +40,7 @@ The guided `init`, `--config`, and explicit `--bundle`/`--module` paths produce 
 
 The recommended `typescript-library` bundle contains `core`, `typescript-node`, `github`, `freshness`, `agents`, `public-api`, `generated-artifacts`, and `npm-publish`.
 
-Optional modules are `browser`, `cross-platform`, `docs`, `performance`, and `long-running`. The built-in catalog uses the same versioned declarative contract exposed for experimental third-party catalogs; external modules declare data and templates and do not execute package code in the maintainer process.
+Optional modules are `browser`, `cross-platform`, `docs`, `performance`, `long-running`, and `web-css-reset`. The `web-css-reset` module installs a low-specificity native-element reset at `src/styles/reset.css`; web starters should select it and import that file before product styles. It deliberately avoids universal margin or padding rules so application CSS cannot strip layout from custom-element hosts. The built-in catalog uses the same versioned declarative contract exposed for experimental third-party catalogs; external modules declare data and templates and do not execute package code in the maintainer process.
 
 Use `threadlabs explain` to list modules and `threadlabs explain <module>` to inspect its controls, applicability, lane, cost, dependencies, artifacts, and stages.
 

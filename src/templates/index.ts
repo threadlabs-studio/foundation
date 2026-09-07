@@ -59,6 +59,48 @@ corepack pnpm verify:pr
 
 [MIT](LICENSE)
 `,
+  'web/reset-css': `/*
+ * Threadlabs minimal web reset.
+ * Keep universal rules structural; reset native document elements explicitly.
+ */
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-block-size: 100vh;
+    min-block-size: 100dvh;
+    margin: 0;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6, p, ul, ol, menu, figure, blockquote, dl, dd) {
+    margin: 0;
+  }
+
+  :where(button, input, optgroup, select, textarea) {
+    margin: 0;
+    color: inherit;
+    font: inherit;
+  }
+
+  :where(img, picture, video, canvas) {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  :where(img, video) {
+    block-size: auto;
+  }
+}
+`,
   'typescript/package-json': `{
   "name": "{{projectName}}",
   "version": "0.0.0",
