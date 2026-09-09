@@ -11,6 +11,7 @@ import { packageName } from '../../src/index.js';
 
 const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
 const temporaryDirectories: string[] = [];
+const command = (name: string): string => (process.platform === 'win32' ? `${name}.cmd` : name);
 
 function makeTemporaryDirectory(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix));
@@ -91,7 +92,7 @@ describe('public package contract', () => {
     });
 
     const packOutput = execFileSync(
-      'corepack',
+      command('corepack'),
       ['pnpm@11.25.0', 'pack', '--pack-destination', packDirectory],
       { cwd: repositoryRoot, encoding: 'utf8' },
     );
@@ -131,10 +132,14 @@ describe('public package contract', () => {
       join(consumerDirectory, 'package.json'),
       JSON.stringify({ name: 'threadlabs-package-consumer', private: true, type: 'module' }),
     );
-    execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarballPath], {
-      cwd: consumerDirectory,
-      stdio: 'pipe',
-    });
+    execFileSync(
+      command('npm'),
+      ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarballPath],
+      {
+        cwd: consumerDirectory,
+        stdio: 'pipe',
+      },
+    );
 
     const importedName = execFileSync(
       process.execPath,
