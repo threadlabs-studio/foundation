@@ -103,7 +103,7 @@ describe('public package contract', () => {
 
     const packedPaths = execFileSync('tar', ['-tzf', tarballPath], { encoding: 'utf8' })
       .trim()
-      .split('\n')
+      .split(/\r?\n/u)
       .map((path) => path.replace(/^package\//u, ''));
 
     expect(packedPaths).toEqual(
