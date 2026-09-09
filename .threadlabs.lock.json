@@ -7,7 +7,7 @@
     ".github/workflows/release.yml": "5f01ae8ffba35979a702166d2a5cee2525d0e6dc6e9199d97da2d47a1fcb2298",
     "LICENSE": "da71762cf01a96f08d8c167d2bf9a1de314783c50d00d865bdc353988988a62b",
     "scripts/release.mjs": "8014f3b8cea62f6898215215b62322e77004468be72668d89b20d1495a0c2286",
-    "threadlabs.config.json": "67cd6e46db3fa4a72960eb3a65d8be717c845542f38b0b7fed5bf460c572c69b"
+    "threadlabs.config.json": "4b2b415f824f126834d866c1eb1fc4d3f22fa2e695ef1bf90438cd48cd51113c"
   },
   "modules": {
     "agents": "1.0.0",

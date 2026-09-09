@@ -8,5 +8,8 @@ export const agentsModule = defineModule({
   applicability: 'Repositories developed with coding agents.',
   lane: 'inner',
   expectedSeconds: 1,
-  artifacts: [{ path: 'AGENTS.md', ownership: 'managed', template: 'agents/root' }],
+  artifacts: [
+    { path: 'AGENTS.md', ownership: 'managed', template: 'agents/root' },
+    { path: 'CLAUDE.md', ownership: 'managed', template: 'agents/claude' },
+  ],
 });

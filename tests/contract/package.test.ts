@@ -70,12 +70,14 @@ describe('public package contract', () => {
       devDependencies?: unknown;
       devEngines?: unknown;
       packageManager?: unknown;
+      scripts?: Readonly<Record<string, string>>;
     };
 
     expect(sourceManifest.devEngines).toEqual({
       runtime: { name: 'node', version: '>=24 <25', onFail: 'warn' },
     });
     expect(sourceManifest.packageManager).toBe('pnpm@11.25.0');
+    expect(sourceManifest.scripts?.lint).toBe('oxlint --deny-warnings .');
     expect(sourceManifest.dependencies).toEqual({
       '@inquirer/prompts': '8.7.1',
       semver: '7.8.5',
@@ -84,7 +86,6 @@ describe('public package contract', () => {
       '@types/node': '22.20.1',
       '@types/semver': '7.8.0',
       oxlint: '1.81.0',
-      prettier: '3.9.6',
       typescript: '7.0.2',
       vitest: '5.0.0',
     });
@@ -120,7 +121,7 @@ describe('public package contract', () => {
     expect(packedPaths.some((path) => /^(docs|tests)\//u.test(path))).toBe(false);
     expect(
       packedPaths.some((path) =>
-        /^(?:oxlint\.json|prettier\.config\.mjs|tsconfig(?:\.build)?\.json|vitest\.config\.ts)$/u.test(
+        /^(?:oxlint\.json|tsconfig(?:\.build)?\.json|vitest\.config\.ts)$/u.test(
           path,
         ),
       ),

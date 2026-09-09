@@ -68,6 +68,7 @@ describe('Foundation dogfood', () => {
       expect.arrayContaining([
         'package.json',
         'AGENTS.md',
+        'CLAUDE.md',
         '.github/workflows/ci.yml',
         '.github/workflows/release.yml',
         '.github/dependabot.yml',

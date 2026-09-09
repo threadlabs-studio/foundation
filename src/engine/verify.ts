@@ -15,7 +15,6 @@ export interface VerificationCheck {
 }
 
 const checks: readonly VerificationCheck[] = [
-  { id: 'format', script: 'format:check', lane: 'inner' },
   { id: 'lint', script: 'lint', lane: 'inner' },
   { id: 'typecheck', script: 'typecheck', lane: 'inner' },
   { id: 'test', script: 'test', lane: 'inner' },
