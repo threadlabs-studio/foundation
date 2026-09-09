@@ -292,7 +292,7 @@ flowchart TB
 - KTD11. **Use public lifecycle and registry adapters with source-level cache semantics.** Node lifecycle data and npm metadata are normalized into timestamped observations. A 24-hour cache may inform a recommendation, but stale or unavailable evidence cannot authorize a version-changing or remote stage.
 - KTD12. **Generate GitHub-native dependency and release automation.** Dependabot is the default freshness adapter because the first release is GitHub-first and its grouped update model satisfies R24 at low installation cost. Changesets is optional for monorepo release modes. The local CLI performs package inspection and dry-run checks; the protected generated workflow owns npm OIDC publication under R50.
 - KTD13. **Vendor self-contained workflows in v1.** Generated repositories receive thin local workflows and full-SHA action pins so their required checks do not depend on Threadlabs availability. Centrally reusable workflows remain a later contract addition after they have a real consumer; Dependabot owns action revision updates in v1.
-- KTD14. **Use exact tool pins with pnpm, TypeScript, Vitest, Oxlint, and Prettier.** Initial implementation resolves pnpm 11.25.0, TypeScript 7.0.2, Vitest 5.0.0, Oxlint 1.81.0, Prettier 3.9.6, `@types/node` 22.20.1, and `@inquirer/prompts` 8.7.1. The minimum Node and type-definition lines match, and future updates follow R20-R25 rather than retaining these versions indefinitely.
+- KTD14. **Use exact tool pins with pnpm, TypeScript, Vitest, and Oxlint.** Initial implementation resolves pnpm 11.25.0, TypeScript 7.0.2, Vitest 5.0.0, Oxlint 1.81.0, `@types/node` 22.20.1, and `@inquirer/prompts` 8.7.1. The baseline deliberately has no repository-wide formatter. The minimum Node and type-definition lines match, and future updates follow R20-R25 rather than retaining these versions indefinitely.
 - KTD15. **Version public contracts independently and deprecate before removal.** Supported manifest, lock, plan, and evidence schema majors remain backward compatible; control and module IDs are never repurposed. CLI removals and schema-major changes require a documented migration and at least one released deprecation cycle. The declarative third-party extension surface is experimental in the first release and is labeled separately from stable built-in contracts.
 
 ### High-Level Technical Design
@@ -418,6 +418,7 @@ Adapter failure becomes an observation or effect result and cannot change policy
 ```text
 .
 ├── AGENTS.md
+├── CLAUDE.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── README.md
@@ -427,7 +428,6 @@ Adapter failure becomes an observation or effect result and cannot change policy
 ├── tsconfig.json
 ├── tsconfig.build.json
 ├── oxlint.json
-├── prettier.config.mjs
 ├── vitest.config.ts
 ├── schemas/
 │   ├── config.schema.json
@@ -481,7 +481,7 @@ Adapter failure becomes an observation or effect result and cannot change policy
 - **Goal:** Establish a reproducible ESM TypeScript package whose library and CLI surfaces can be tested and packed on every supported Node line.
 - **Requirements:** R20-R23, R42; KTD1, KTD14.
 - **Dependencies:** None.
-- **Files:** `package.json`, `pnpm-lock.yaml`, `tsconfig.json`, `tsconfig.build.json`, `oxlint.json`, `prettier.config.mjs`, `vitest.config.ts`, `src/index.ts`, `src/cli.ts`, `tests/contract/package.test.ts`.
+- **Files:** `package.json`, `pnpm-lock.yaml`, `tsconfig.json`, `tsconfig.build.json`, `oxlint.json`, `vitest.config.ts`, `src/index.ts`, `src/cli.ts`, `tests/contract/package.test.ts`.
 - **Approach:** Configure exact pins, conditional package exports, a `threadlabs` binary, unbundled declaration output, source maps, clean package contents, and commands for each verification lane. Keep runtime dependencies limited to the terminal library until an additional dependency earns its cost.
 - **Execution note:** Prove package installation and CLI startup from a packed tarball before adding product behavior.
 - **Patterns to follow:** KTD1 and KTD14; Node package exports and npm package-content inspection.
@@ -624,7 +624,7 @@ Adapter failure becomes an observation or effect result and cannot change policy
 - **Goal:** Make the standard understandable, publish-safe, and proven by applying it to Threadlabs itself without importing private provenance.
 - **Requirements:** R1, R7-R9, R13-R19, R20-R40; F1-F5; AE8-AE10; KTD1-KTD15.
 - **Dependencies:** U1-U9.
-- **Files:** `README.md`, `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `docs/standard.md`, `docs/configuration.md`, `docs/controls.md`, `docs/release.md`, `threadlabs.config.json`, `.threadlabs.lock.json`, `.gitignore`, `.github/dependabot.yml`, `.github/workflows/ci.yml`, `.github/workflows/extended.yml`, `.github/workflows/release.yml`, `tests/contract/public-safety.test.ts`, `tests/integration/dogfood.test.ts`.
+- **Files:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `docs/standard.md`, `docs/configuration.md`, `docs/controls.md`, `docs/release.md`, `threadlabs.config.json`, `.threadlabs.lock.json`, `.gitignore`, `.github/dependabot.yml`, `.github/workflows/ci.yml`, `.github/workflows/extended.yml`, `.github/workflows/release.yml`, `tests/contract/public-safety.test.ts`, `tests/integration/dogfood.test.ts`.
 - **Approach:** Document the standard as decisions and control economics, not as an unexplained checklist. Make `AGENTS.md` the concise canonical front door. Treat the guided TypeScript-library flow as the first-run golden path and measure the complete selection-to-first-green interaction against the 15-minute criterion. Bootstrap CI in three gates: package and schema contracts, product fixtures and adapters, then self-hosted dogfood after the generated manifest and lock reach a stable baseline. Commit only deterministic manifest, lock, workflows, schemas, and redacted fixtures.
 - **Test scenarios:**
   - Covers AE9. Scan committed docs, fixtures, templates, snapshots, and package contents for home-directory paths, credentials, private provenance markers, and non-relative evidence paths using generic synthetic patterns.
@@ -642,7 +642,7 @@ Adapter failure becomes an observation or effect result and cannot change policy
 | Gate | Command | Applies | Evidence and budget |
 | --- | --- | --- | --- |
 | Focused unit work | `pnpm test -- --changed` or the owning test file | Active unit | Changed behavior; inner-loop target within 90 seconds |
-| Inner lane | `pnpm verify:inner` | Every implementation unit | Format check, lint, typecheck, focused tests, and required build truth; target within 90 seconds |
+| Inner lane | `pnpm verify:inner` | Every implementation unit | Lint, typecheck, focused tests, and required build truth; target within 90 seconds |
 | Pull-request lane | `pnpm verify:pr` | Before handoff | Clean build, full unit/integration suite, schema contracts, package inspection, packed-consumer smoke, public-safety scan, and dogfood audit; target within five minutes |
 | Supported runtimes | CI matrix on Node 22.13+ and Node 24 | Every pull request | Frozen install and stable aggregate result for every promised runtime |
 | Extended lane | `pnpm verify:extended` | Adapter, cross-platform, browser, performance, long-running, or fault-recovery changes | Risk-triggered corpus, platform, fault-injection, or calibrated performance evidence; target within 15 minutes |

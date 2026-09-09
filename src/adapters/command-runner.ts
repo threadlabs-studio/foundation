@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { homedir } from 'node:os';
 
 import type { VerificationResultState } from '../domain/control.js';
 
@@ -21,10 +22,10 @@ export interface BoundedCommandResult {
 }
 
 function redact(value: string): string {
-  const home = process.env.HOME;
+  const home = homedir();
   return value
     .replace(/\b(?:gh[opusr]_|npm_)[A-Za-z0-9_=-]{8,}\b/gu, '<redacted>')
-    .replaceAll(home === undefined ? '\0unlikely-home\0' : home, '<home>');
+    .replaceAll(home, '<home>');
 }
 
 function truncateUtf8(value: string, maxBytes: number): string {
@@ -54,6 +55,7 @@ export function runBoundedCommand(
     };
   }
   const maxOutputBytes = options.maxOutputBytes ?? 64 * 1024;
+  const home = homedir();
   const started = performance.now();
   const result = spawnSync(executable, arguments_, {
     cwd,
@@ -63,7 +65,7 @@ export function runBoundedCommand(
     maxBuffer: Math.max(1024 * 1024, maxOutputBytes * 4),
     env: {
       PATH: process.env.PATH,
-      HOME: process.env.HOME,
+      HOME: home,
       CI: '1',
       FORCE_COLOR: '0',
     },

@@ -6,7 +6,7 @@ describe('verification lanes', () => {
   it('selects cumulative checks and only risk-triggered optional checks', () => {
     expect(
       selectVerificationChecks(['core', 'typescript-node'], 'inner').map((check) => check.id),
-    ).toEqual(['build', 'format', 'lint', 'test', 'typecheck']);
+    ).toEqual(['build', 'lint', 'test', 'typecheck']);
     expect(
       selectVerificationChecks(['core', 'typescript-node'], 'extended').map((check) => check.id),
     ).not.toContain('browser');
@@ -40,13 +40,13 @@ describe('verification lanes', () => {
 
   it('does not claim a passed lane when checks fail, cancel, or are unavailable', () => {
     const states = new Map<string, 'passed' | 'failed' | 'canceled' | 'unknown' | 'skipped'>([
-      ['format', 'passed'],
       ['lint', 'failed'],
       ['typecheck', 'canceled'],
       ['test', 'unknown'],
       ['build', 'skipped'],
+      ['package', 'passed'],
     ]);
-    const evidence = verifyRepository('.', ['core', 'typescript-node'], 'inner', {
+    const evidence = verifyRepository('.', ['core', 'typescript-node', 'public-api'], 'pr', {
       run: (check) => ({ state: states.get(check.id) ?? 'passed', durationMs: 1 }),
       revision: () => ({ revision: 'abc123', dirtyFingerprint: 'dirty' }),
       now: () => '2026-09-06T00:00:00.000Z',
@@ -65,6 +65,6 @@ describe('verification lanes', () => {
     });
     expect(evidence.state).toBe('passed');
     expect(evidence.remainingHumanJudgment).toContainEqual(expect.stringMatching(/90s budget/iu));
-    expect(evidence.checks.length).toBe(5);
+    expect(evidence.checks.length).toBe(4);
   });
 });

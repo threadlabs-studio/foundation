@@ -11,6 +11,7 @@ import { packageName } from '../../src/index.js';
 
 const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
 const temporaryDirectories: string[] = [];
+const useCommandShell = process.platform === 'win32';
 
 function makeTemporaryDirectory(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix));
@@ -70,12 +71,14 @@ describe('public package contract', () => {
       devDependencies?: unknown;
       devEngines?: unknown;
       packageManager?: unknown;
+      scripts?: Readonly<Record<string, string>>;
     };
 
     expect(sourceManifest.devEngines).toEqual({
       runtime: { name: 'node', version: '>=24 <25', onFail: 'warn' },
     });
     expect(sourceManifest.packageManager).toBe('pnpm@11.25.0');
+    expect(sourceManifest.scripts?.lint).toBe('oxlint --deny-warnings .');
     expect(sourceManifest.dependencies).toEqual({
       '@inquirer/prompts': '8.7.1',
       semver: '7.8.5',
@@ -84,7 +87,6 @@ describe('public package contract', () => {
       '@types/node': '22.20.1',
       '@types/semver': '7.8.0',
       oxlint: '1.81.0',
-      prettier: '3.9.6',
       typescript: '7.0.2',
       vitest: '5.0.0',
     });
@@ -92,7 +94,7 @@ describe('public package contract', () => {
     const packOutput = execFileSync(
       'corepack',
       ['pnpm@11.25.0', 'pack', '--pack-destination', packDirectory],
-      { cwd: repositoryRoot, encoding: 'utf8' },
+      { cwd: repositoryRoot, encoding: 'utf8', shell: useCommandShell },
     );
     const tarballName = packOutput.trim().split('\n').at(-1);
 
@@ -101,7 +103,7 @@ describe('public package contract', () => {
 
     const packedPaths = execFileSync('tar', ['-tzf', tarballPath], { encoding: 'utf8' })
       .trim()
-      .split('\n')
+      .split(/\r?\n/u)
       .map((path) => path.replace(/^package\//u, ''));
 
     expect(packedPaths).toEqual(
@@ -120,7 +122,7 @@ describe('public package contract', () => {
     expect(packedPaths.some((path) => /^(docs|tests)\//u.test(path))).toBe(false);
     expect(
       packedPaths.some((path) =>
-        /^(?:oxlint\.json|prettier\.config\.mjs|tsconfig(?:\.build)?\.json|vitest\.config\.ts)$/u.test(
+        /^(?:oxlint\.json|tsconfig(?:\.build)?\.json|vitest\.config\.ts)$/u.test(
           path,
         ),
       ),
@@ -130,10 +132,15 @@ describe('public package contract', () => {
       join(consumerDirectory, 'package.json'),
       JSON.stringify({ name: 'threadlabs-package-consumer', private: true, type: 'module' }),
     );
-    execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarballPath], {
-      cwd: consumerDirectory,
-      stdio: 'pipe',
-    });
+    execFileSync(
+      'npm',
+      ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarballPath],
+      {
+        cwd: consumerDirectory,
+        shell: useCommandShell,
+        stdio: 'pipe',
+      },
+    );
 
     const importedName = execFileSync(
       process.execPath,
@@ -148,12 +155,18 @@ describe('public package contract', () => {
 
     const binaryName = process.platform === 'win32' ? 'threadlabs.cmd' : 'threadlabs';
     const installedBinary = join(consumerDirectory, 'node_modules', '.bin', binaryName);
-    const helpResult = spawnSync(installedBinary, ['--help'], { encoding: 'utf8' });
+    const helpResult = spawnSync(installedBinary, ['--help'], {
+      encoding: 'utf8',
+      shell: useCommandShell,
+    });
     expect(helpResult.status).toBe(0);
     expect(helpResult.stdout).toContain('Usage: threadlabs');
     expect(helpResult.stderr).toBe('');
 
-    const invalidResult = spawnSync(installedBinary, ['not-a-command'], { encoding: 'utf8' });
+    const invalidResult = spawnSync(installedBinary, ['not-a-command'], {
+      encoding: 'utf8',
+      shell: useCommandShell,
+    });
     expect(invalidResult.status).toBe(2);
     expect(invalidResult.stdout).toBe('');
     expect(invalidResult.stderr).toBe(

@@ -14,7 +14,6 @@ export const typescriptNodeModule = defineModule({
     { path: 'tsconfig.json', ownership: 'managed', template: 'typescript/tsconfig' },
     { path: 'tsconfig.build.json', ownership: 'managed', template: 'typescript/tsconfig-build' },
     { path: 'oxlint.json', ownership: 'managed', template: 'typescript/oxlint' },
-    { path: 'prettier.config.mjs', ownership: 'managed', template: 'typescript/prettier' },
     { path: 'vitest.config.ts', ownership: 'managed', template: 'typescript/vitest' },
     { path: 'src/index.ts', ownership: 'managed', template: 'typescript/index' },
     { path: 'tests/index.test.ts', ownership: 'managed', template: 'typescript/test' },

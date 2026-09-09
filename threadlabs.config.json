@@ -31,6 +31,10 @@
     },
     {
       "mode": "local",
+      "path": "CLAUDE.md"
+    },
+    {
+      "mode": "local",
       "path": "README.md"
     },
     {
@@ -44,10 +48,6 @@
     {
       "mode": "local",
       "path": "pnpm-workspace.yaml"
-    },
-    {
-      "mode": "local",
-      "path": "prettier.config.mjs"
     },
     {
       "mode": "local",

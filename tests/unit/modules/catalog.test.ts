@@ -88,4 +88,46 @@ describe('built-in catalog', () => {
       if (name === 'typescript/package-json') expect(() => JSON.parse(rendered)).not.toThrow();
     }
   });
+
+  it('keeps the TypeScript baseline on Oxlint without forbidden styling dependencies', () => {
+    const module = getBuiltInModule('typescript-node');
+    expect(module.artifacts.map(({ path }) => path)).toContain('oxlint.json');
+    expect(module.artifacts.map(({ path }) => path)).not.toContain('prettier.config.mjs');
+
+    const manifest = JSON.parse(
+      renderTemplate('typescript/package-json', {
+        projectName: 'example-library',
+        description: 'A synthetic project.',
+        licenseHolder: 'Example Authors',
+      }),
+    ) as {
+      scripts: Readonly<Record<string, string>>;
+      devDependencies: Readonly<Record<string, string>>;
+    };
+    expect(manifest.scripts).not.toHaveProperty('format:check');
+    expect(manifest.scripts.lint).toBe('oxlint --deny-warnings .');
+    expect(manifest.devDependencies).toHaveProperty('oxlint');
+    expect(manifest.devDependencies).not.toHaveProperty('prettier');
+    expect(manifest.devDependencies).not.toHaveProperty('tailwindcss');
+  });
+
+  it('tells coding agents not to introduce Prettier or Tailwind', () => {
+    const module = getBuiltInModule('agents');
+    expect(module.artifacts.map(({ path }) => path)).toEqual(['AGENTS.md', 'CLAUDE.md']);
+
+    const guide = renderTemplate('agents/root', {
+      projectName: 'example-library',
+      description: 'A synthetic project.',
+      licenseHolder: 'Example Authors',
+    });
+    expect(guide).toContain('Do not add Prettier');
+    expect(guide).toContain('Do not add Tailwind');
+
+    const claudeGuide = renderTemplate('agents/claude', {
+      projectName: 'example-library',
+      description: 'A synthetic project.',
+      licenseHolder: 'Example Authors',
+    });
+    expect(claudeGuide).toBe('@AGENTS.md\n');
+  });
 });

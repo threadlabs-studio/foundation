@@ -38,7 +38,7 @@ The guided `init`, `--config`, and explicit `--bundle`/`--module` paths produce 
 
 ## Modules
 
-The recommended `typescript-library` bundle contains `core`, `typescript-node`, `github`, `freshness`, `agents`, `public-api`, `generated-artifacts`, and `npm-publish`.
+The recommended `typescript-library` bundle contains `core`, `typescript-node`, `github`, `freshness`, `agents`, `public-api`, `generated-artifacts`, and `npm-publish`. The `agents` module generates the canonical root `AGENTS.md` plus a thin `CLAUDE.md` import so Codex and Claude receive one consistent repository contract.
 
 Optional modules are `browser`, `cross-platform`, `docs`, `performance`, and `long-running`. The built-in catalog uses the same versioned declarative contract exposed for experimental third-party catalogs; external modules declare data and templates and do not execute package code in the maintainer process.
 

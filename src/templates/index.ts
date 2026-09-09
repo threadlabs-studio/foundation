@@ -79,11 +79,10 @@ corepack pnpm verify:pr
     "clean": "node --input-type=module --eval \\\"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\\\"",
     "build": "pnpm clean && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
-    "lint": "oxlint src tests vitest.config.ts",
-    "format:check": "prettier --check README.md AGENTS.md prettier.config.mjs \\\"src/**/*.ts\\\" \\\"tests/**/*.ts\\\"",
+    "lint": "oxlint --deny-warnings .",
     "test": "vitest run --exclude tests/package.test.ts",
     "test:package": "vitest run tests/package.test.ts",
-    "verify:inner": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "verify:inner": "pnpm lint && pnpm typecheck && pnpm test",
     "verify:pr": "pnpm verify:inner && pnpm build && pnpm test:package",
     "verify:extended": "pnpm verify:pr",
     "verify:release": "pnpm verify:pr && pnpm pack --dry-run",
@@ -92,7 +91,6 @@ corepack pnpm verify:pr
   "devDependencies": {
     "@types/node": "22.20.1",
     "oxlint": "1.81.0",
-    "prettier": "3.9.6",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   }
@@ -145,12 +143,6 @@ minimumReleaseAgeExclude:
   "categories": { "correctness": "error", "suspicious": "warn" }
 }
 `,
-  'typescript/prettier': `export default {
-  singleQuote: true,
-  trailingComma: 'all',
-  printWidth: 100,
-};
-`,
   'typescript/vitest': `import { defineConfig } from 'vitest/config';
 
 export default defineConfig({ test: { include: ['tests/**/*.test.ts'] } });
@@ -177,15 +169,17 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const workspace = mkdtempSync(join(tmpdir(), 'package-consumer-'));
+const useCommandShell = process.platform === 'win32';
 
 afterAll(() => rmSync(workspace, { recursive: true, force: true }));
 
 describe('published package contract', () => {
   it('installs from its tarball and exposes the declared import', () => {
-    const packed = execFileSync('corepack', ['pnpm', 'pack', '--pack-destination', workspace], {
-      cwd: root,
-      encoding: 'utf8',
-    })
+    const packed = execFileSync(
+      'corepack',
+      ['pnpm', 'pack', '--pack-destination', workspace],
+      { cwd: root, encoding: 'utf8', shell: useCommandShell },
+    )
       .trim()
       .split('\\n')
       .at(-1);
@@ -195,9 +189,11 @@ describe('published package contract', () => {
       join(workspace, 'package.json'),
       JSON.stringify({ name: 'package-consumer', private: true, type: 'module' }),
     );
-    execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball], {
-      cwd: workspace,
-    });
+    execFileSync(
+      'npm',
+      ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball],
+      { cwd: workspace, shell: useCommandShell },
+    );
     const installed = JSON.parse(
       readFileSync(join(workspace, 'node_modules', '{{projectName}}', 'package.json'), 'utf8'),
     );
@@ -244,7 +240,8 @@ jobs:
         with:
           node-version: \${{ matrix.node }}
           package-manager-cache: false
-      - run: npm install --global --ignore-scripts corepack@0.34.0
+      # Corepack owns the pnpm/Yarn shims; --force replaces runner-provided shims in this ephemeral job.
+      - run: npm install --global --ignore-scripts --force corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:pr
@@ -306,7 +303,8 @@ jobs:
           node-version: '24'
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-      - run: npm install --global --ignore-scripts corepack@0.34.0
+      # Corepack owns the pnpm/Yarn shims; --force replaces runner-provided shims in this ephemeral job.
+      - run: npm install --global --ignore-scripts --force corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:release
@@ -338,7 +336,8 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - run: npm install --global --ignore-scripts corepack@0.34.0
+      # Corepack owns the pnpm/Yarn shims; --force replaces runner-provided shims in this ephemeral job.
+      - run: npm install --global --ignore-scripts --force corepack@0.34.0
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:extended
@@ -355,7 +354,9 @@ jobs:
 
 - Preserve unrelated changes and never rewrite shared Git history without explicit approval.
 - Preview Foundation plans before applying them.
-- Do not edit generated or managed files without checking .threadlabs.lock.json ownership.
+- Check threadlabs.config.json for each path's ownership mode before editing. For managed paths, use .threadlabs.lock.json to confirm the last-applied content and change the owning Foundation template; preserve local paths and stop on ambiguous ownership.
+- Use Oxlint for JavaScript and TypeScript linting. Do not add Prettier or another repository-wide formatter.
+- Do not add Tailwind. Use project-owned CSS, CSS Modules, or an explicitly selected non-Tailwind styling approach.
 
 ## Verification
 
@@ -363,7 +364,10 @@ jobs:
 - Before handoff, run \`pnpm verify:pr\` and report commands, results, skips, and remaining judgment.
 - Publication remains human-approved and runs only through the protected release workflow.
 `,
-  'generated/gitattributes': `dist/** linguist-generated=true
+  'agents/claude': `@AGENTS.md
+`,
+  'generated/gitattributes': `* text=auto eol=lf
+dist/** linguist-generated=true
 *.lock linguist-generated=true
 `,
   'docs/readme': `# Documentation

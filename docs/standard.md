@@ -6,7 +6,9 @@ Use a maintained LTS-first TypeScript/Node baseline for public libraries, then c
 
 ## Technology baseline
 
-The recommended library baseline is strict ESM TypeScript, pnpm through Corepack, Vitest, oxlint, Prettier, and GitHub Actions. Node 24 is the primary maintained LTS line and Node 22.13 through the Node 22 line remains a supported compatibility range. Odd-numbered and EOL lines are not accidentally promised by an open-ended engine range. Exact tool versions and action commits are checked in. CI installs Corepack 0.34.0 explicitly because it is the newest pinned line compatible with the minimum Node 22.13 contract; relying on Node's bundled Corepack would retain stale package-manager signing keys. Dependabot proposes compatible dependency and action updates weekly; major, security, prerelease, held, EOL, stale, and failed-update states stay distinct.
+The recommended library baseline is strict ESM TypeScript, pnpm through Corepack, Vitest, Oxlint, and GitHub Actions. Node 24 is the primary maintained LTS line and Node 22.13 through the Node 22 line remains a supported compatibility range. Odd-numbered and EOL lines are not accidentally promised by an open-ended engine range. Exact tool versions and action commits are checked in. CI installs Corepack 0.34.0 explicitly because it is the newest pinned line compatible with the minimum Node 22.13 contract; relying on Node's bundled Corepack would retain stale package-manager signing keys. Dependabot proposes compatible dependency and action updates weekly; major, security, prerelease, held, EOL, stale, and failed-update states stay distinct.
+
+Oxlint is the required JavaScript and TypeScript lint gate and warnings fail CI. Foundation does not install or configure a repository-wide formatter; maintainers keep source readable through normal editing and review without accepting formatting churn as a prerequisite for correctness. New Foundation repositories do not use Prettier or Tailwind. UI projects use project-owned CSS, CSS Modules, or an explicitly selected non-Tailwind styling approach.
 
 Version drift is presumed accidental unless an exception records a reason, owner, scope, and review date. Maintained stable releases are preferred. Prerelease, EOL, or intentionally held tooling needs explicit evidence and periodic review.
 
@@ -16,7 +18,7 @@ The `freshness` command compares the declared Node ranges with the [published No
 
 | Lane         | Normal use             | What belongs here                                                    | Budget target |
 | ------------ | ---------------------- | -------------------------------------------------------------------- | ------------- |
-| Inner        | Every change           | formatting, lint, types, focused contracts, build truth              | 90 seconds    |
+| Inner        | Every change           | lint, types, focused contracts, build truth                          | 90 seconds    |
 | Pull request | Before review/handoff  | full tests, schemas, package smoke, public safety, dogfood           | 5 minutes     |
 | Extended     | Triggered by risk      | platform, browser, performance, fault recovery, larger corpora       | 15 minutes    |
 | Scheduled    | Time-based             | noisy or exhaustive checks and freshness observations                | measured      |
@@ -40,4 +42,4 @@ An exception is not a vague “skip.” It names a control, rationale, owner, sc
 
 ## Agent-driven development
 
-Every managed repository has a concise root `AGENTS.md` that points to authoritative requirements, safe/destructive boundaries, applicable verification, generated-file hazards, completion evidence, and the owner-decision route. Tool-specific files may route to that contract but must not compete with it. Temporary plans, branch state, measurements, and handoff notes do not belong in durable instructions.
+Every managed repository has a concise root `AGENTS.md` that points to authoritative requirements, safe/destructive boundaries, applicable verification, generated-file hazards, completion evidence, and the owner-decision route. A root `CLAUDE.md` imports and routes Claude to the same contract. Tool-specific files must not compete with `AGENTS.md`. Temporary plans, branch state, measurements, and handoff notes do not belong in durable instructions.
