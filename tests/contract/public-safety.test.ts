@@ -53,6 +53,9 @@ describe('public repository safety', () => {
       }
       expect(content, name).toContain('permissions:');
       expect(content, name).toContain('pnpm install --frozen-lockfile');
+      expect(content, name).toContain(
+        'npm install --global --ignore-scripts --force corepack@0.34.0',
+      );
     }
 
     const ci = workflows.find(({ name }) => name === 'ci.yml')?.content ?? '';
