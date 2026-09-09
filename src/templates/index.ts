@@ -362,7 +362,8 @@ jobs:
 `,
   'agents/claude': `@AGENTS.md
 `,
-  'generated/gitattributes': `dist/** linguist-generated=true
+  'generated/gitattributes': `* text=auto eol=lf
+dist/** linguist-generated=true
 *.lock linguist-generated=true
 `,
   'docs/readme': `# Documentation

@@ -1,6 +1,6 @@
 {
   "artifacts": {
-    ".gitattributes": "855fad671d82c5efee0bf10ccb8ce4d26c6ec93fa33af7f86362f515c6d0b38f",
+    ".gitattributes": "e54c83aec897237a7b75759915ef0634b3466eae3614a8d676db2012d49faa9e",
     ".github/dependabot.yml": "4c835c01213d922e37a495e4c027c9fc5a37afe86939ac216d848f18750b19d2",
     ".github/workflows/ci.yml": "0cc1702cea6bb4d695d547a47cef1e0ad9426ae4ee33e5f896ade44abf5758e1",
     ".github/workflows/extended.yml": "7215a0eed9175bbca00d6025058ae13ef7e915e360781fc2bea947e3561661bc",

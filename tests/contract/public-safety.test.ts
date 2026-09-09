@@ -88,4 +88,9 @@ describe('public repository safety', () => {
       expect(guide.toLowerCase()).toContain(evidence);
     }
   });
+
+  it('keeps managed text hashes stable across Git checkout platforms', () => {
+    const attributes = readFileSync(join(root, '.gitattributes'), 'utf8');
+    expect(attributes).toContain('* text=auto eol=lf');
+  });
 });
