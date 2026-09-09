@@ -169,16 +169,16 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const workspace = mkdtempSync(join(tmpdir(), 'package-consumer-'));
-const command = (name: string): string => (process.platform === 'win32' ? \`\${name}.cmd\` : name);
+const useCommandShell = process.platform === 'win32';
 
 afterAll(() => rmSync(workspace, { recursive: true, force: true }));
 
 describe('published package contract', () => {
   it('installs from its tarball and exposes the declared import', () => {
     const packed = execFileSync(
-      command('corepack'),
+      'corepack',
       ['pnpm', 'pack', '--pack-destination', workspace],
-      { cwd: root, encoding: 'utf8' },
+      { cwd: root, encoding: 'utf8', shell: useCommandShell },
     )
       .trim()
       .split('\\n')
@@ -190,9 +190,9 @@ describe('published package contract', () => {
       JSON.stringify({ name: 'package-consumer', private: true, type: 'module' }),
     );
     execFileSync(
-      command('npm'),
+      'npm',
       ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball],
-      { cwd: workspace },
+      { cwd: workspace, shell: useCommandShell },
     );
     const installed = JSON.parse(
       readFileSync(join(workspace, 'node_modules', '{{projectName}}', 'package.json'), 'utf8'),

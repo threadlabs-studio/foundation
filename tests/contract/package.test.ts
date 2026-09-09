@@ -11,7 +11,7 @@ import { packageName } from '../../src/index.js';
 
 const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
 const temporaryDirectories: string[] = [];
-const command = (name: string): string => (process.platform === 'win32' ? `${name}.cmd` : name);
+const useCommandShell = process.platform === 'win32';
 
 function makeTemporaryDirectory(prefix: string): string {
   const directory = mkdtempSync(join(tmpdir(), prefix));
@@ -92,9 +92,9 @@ describe('public package contract', () => {
     });
 
     const packOutput = execFileSync(
-      command('corepack'),
+      'corepack',
       ['pnpm@11.25.0', 'pack', '--pack-destination', packDirectory],
-      { cwd: repositoryRoot, encoding: 'utf8' },
+      { cwd: repositoryRoot, encoding: 'utf8', shell: useCommandShell },
     );
     const tarballName = packOutput.trim().split('\n').at(-1);
 
@@ -133,10 +133,11 @@ describe('public package contract', () => {
       JSON.stringify({ name: 'threadlabs-package-consumer', private: true, type: 'module' }),
     );
     execFileSync(
-      command('npm'),
+      'npm',
       ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarballPath],
       {
         cwd: consumerDirectory,
+        shell: useCommandShell,
         stdio: 'pipe',
       },
     );
@@ -154,12 +155,18 @@ describe('public package contract', () => {
 
     const binaryName = process.platform === 'win32' ? 'threadlabs.cmd' : 'threadlabs';
     const installedBinary = join(consumerDirectory, 'node_modules', '.bin', binaryName);
-    const helpResult = spawnSync(installedBinary, ['--help'], { encoding: 'utf8' });
+    const helpResult = spawnSync(installedBinary, ['--help'], {
+      encoding: 'utf8',
+      shell: useCommandShell,
+    });
     expect(helpResult.status).toBe(0);
     expect(helpResult.stdout).toContain('Usage: threadlabs');
     expect(helpResult.stderr).toBe('');
 
-    const invalidResult = spawnSync(installedBinary, ['not-a-command'], { encoding: 'utf8' });
+    const invalidResult = spawnSync(installedBinary, ['not-a-command'], {
+      encoding: 'utf8',
+      shell: useCommandShell,
+    });
     expect(invalidResult.status).toBe(2);
     expect(invalidResult.stdout).toBe('');
     expect(invalidResult.stderr).toBe(
