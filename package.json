@@ -66,13 +66,13 @@
     "threadlabs": "node ./dist/cli.js"
   },
   "dependencies": {
-    "@inquirer/prompts": "8.7.1",
+    "@inquirer/prompts": "8.7.2",
     "semver": "7.8.5"
   },
   "devDependencies": {
     "@types/node": "22.20.1",
     "@types/semver": "7.8.0",
-    "oxlint": "1.81.0",
+    "oxlint": "1.82.0",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   }
