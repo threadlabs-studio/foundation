@@ -17,6 +17,31 @@ export type ReleaseStrategy =
   | 'prerelease-channel'
   | 'exceptional-multi-artifact';
 
+export const CODE_DOCUMENTATION_DIMENSIONS = [
+  'invariant',
+  'algorithm',
+  'platform-boundary',
+  'performance',
+  'security',
+  'lifecycle',
+  'rationale',
+] as const;
+
+export type CodeDocumentationDimension = (typeof CODE_DOCUMENTATION_DIMENSIONS)[number];
+
+export interface CodeDocumentationHotspot {
+  readonly id: string;
+  readonly source: string;
+  readonly symbol: string;
+  readonly dimensions: readonly CodeDocumentationDimension[];
+  readonly documentation: string;
+  readonly tests: readonly string[];
+}
+
+export interface CodeDocumentationConfig {
+  readonly hotspots: readonly CodeDocumentationHotspot[];
+}
+
 export interface StandardException {
   readonly controlId: string;
   readonly reason: string;
@@ -46,6 +71,7 @@ export interface ThreadlabsConfig {
   readonly exceptions: readonly StandardException[];
   readonly ownership: readonly OwnershipGrant[];
   readonly freshness?: { readonly holds: readonly FreshnessHold[] };
+  readonly documentation?: CodeDocumentationConfig;
   readonly release?: { readonly strategy: ReleaseStrategy };
   readonly settings?: Readonly<Record<string, unknown>>;
 }
@@ -138,6 +164,7 @@ export function validateConfig(input: unknown): ValidationIssue[] {
       'exceptions',
       'ownership',
       'freshness',
+      'documentation',
       'release',
       'settings',
     ]),
@@ -324,6 +351,134 @@ export function validateConfig(input: unknown): ValidationIssue[] {
                 'reviewDate must use YYYY-MM-DD.',
               ),
             );
+          }
+        });
+      }
+    }
+  }
+  if (value.documentation !== undefined) {
+    if (
+      typeof value.documentation !== 'object' ||
+      value.documentation === null ||
+      Array.isArray(value.documentation)
+    ) {
+      issues.push(
+        validationIssue('invalid_type', '/documentation', 'documentation must be an object.'),
+      );
+    } else {
+      const documentation = value.documentation as Record<string, unknown>;
+      issues.push(...unknownKeyIssues(documentation, new Set(['hotspots']), '/documentation'));
+      const hotspots = documentation.hotspots;
+      if (!Array.isArray(hotspots)) {
+        issues.push(
+          validationIssue(
+            'invalid_type',
+            '/documentation/hotspots',
+            'documentation.hotspots must be an array.',
+          ),
+        );
+      } else {
+        const ids = new Set<string>();
+        hotspots.forEach((item, index) => {
+          const path = `/documentation/hotspots/${index}`;
+          if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+            issues.push(validationIssue('invalid_type', path, 'Hotspot must be an object.'));
+            return;
+          }
+          const hotspot = item as Record<string, unknown>;
+          issues.push(
+            ...unknownKeyIssues(
+              hotspot,
+              new Set(['id', 'source', 'symbol', 'dimensions', 'documentation', 'tests']),
+              path,
+            ),
+          );
+          if (typeof hotspot.id !== 'string' || !identifierPattern.test(hotspot.id)) {
+            issues.push(validationIssue('invalid_type', `${path}/id`, 'Hotspot id is invalid.'));
+          } else if (ids.has(hotspot.id)) {
+            issues.push(
+              validationIssue('duplicate_id', `${path}/id`, `Duplicate ID: ${hotspot.id}`),
+            );
+          } else ids.add(hotspot.id);
+          if (typeof hotspot.source !== 'string') {
+            issues.push(validationIssue('required', `${path}/source`, 'source is required.'));
+          } else {
+            issues.push(
+              ...validateManagedPath(hotspot.source).map((issue) => ({
+                ...issue,
+                path: `${path}/source`,
+              })),
+            );
+          }
+          if (typeof hotspot.symbol !== 'string' || hotspot.symbol.trim().length === 0) {
+            issues.push(validationIssue('required', `${path}/symbol`, 'symbol is required.'));
+          }
+          if (!Array.isArray(hotspot.dimensions) || hotspot.dimensions.length === 0) {
+            issues.push(
+              validationIssue('required', `${path}/dimensions`, 'dimensions must not be empty.'),
+            );
+          } else {
+            const seen = new Set<string>();
+            hotspot.dimensions.forEach((dimension, dimensionIndex) => {
+              if (
+                typeof dimension !== 'string' ||
+                !CODE_DOCUMENTATION_DIMENSIONS.includes(dimension as CodeDocumentationDimension)
+              ) {
+                issues.push(
+                  validationIssue(
+                    'invalid_type',
+                    `${path}/dimensions/${dimensionIndex}`,
+                    `Unknown documentation dimension: ${String(dimension)}`,
+                  ),
+                );
+              } else if (seen.has(dimension)) {
+                issues.push(
+                  validationIssue(
+                    'duplicate_id',
+                    `${path}/dimensions/${dimensionIndex}`,
+                    `Duplicate documentation dimension: ${dimension}`,
+                  ),
+                );
+              }
+              seen.add(String(dimension));
+            });
+          }
+          if (
+            typeof hotspot.documentation !== 'string' ||
+            !/^[^#]+\.md#[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(hotspot.documentation)
+          ) {
+            issues.push(
+              validationIssue(
+                'invalid_type',
+                `${path}/documentation`,
+                'documentation must be a repository-relative Markdown path plus heading anchor.',
+              ),
+            );
+          } else {
+            issues.push(
+              ...validateManagedPath(hotspot.documentation.split('#', 1)[0]!).map((issue) => ({
+                ...issue,
+                path: `${path}/documentation`,
+              })),
+            );
+          }
+          if (!Array.isArray(hotspot.tests) || hotspot.tests.length === 0) {
+            issues.push(validationIssue('required', `${path}/tests`, 'tests must not be empty.'));
+          } else {
+            hotspot.tests.forEach((test, testIndex) => {
+              if (typeof test !== 'string') {
+                issues.push(
+                  validationIssue('invalid_type', `${path}/tests/${testIndex}`, 'Expected a path.'),
+                );
+              } else {
+                issues.push(
+                  ...validateManagedPath(test).map((issue) => ({
+                    ...issue,
+                    path: `${path}/tests/${testIndex}`,
+                  })),
+                );
+              }
+            });
           }
         });
       }

@@ -5,6 +5,7 @@ Foundation controls are justified by failure class and applicability, not projec
 | Module                | Failure class addressed                         | Default lane | Expected time | Use when                                   |
 | --------------------- | ----------------------------------------------- | ------------ | ------------: | ------------------------------------------ |
 | `core`                | missing repository contract                     | inner        |            1s | every managed repository                   |
+| `code-documentation`  | implementation reasoning lost or stale          | inner        |            2s | non-obvious code or reusable public APIs    |
 | `typescript-node`     | runtime or type drift                           | inner        |           45s | Node/TypeScript code                       |
 | `github`              | unverified default-branch changes               | PR           |          180s | hosted on GitHub                           |
 | `freshness`           | silent dependency/runtime obsolescence          | scheduled    |           60s | dependencies exist                         |

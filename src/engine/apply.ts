@@ -68,6 +68,13 @@ function assertPlanBindings(root: string, plan: OperationPlan): void {
   }
 }
 
+/**
+ * Applies only a digest-approved local plan. The first pass validates every remaining preimage
+ * before any write, limiting partial mutation to failures that occur during the write phase; the
+ * append-only journal then makes those partial runs observable and safely resumable.
+ *
+ * @docs operation-application
+ */
 export function applyOperationPlan(
   root: string,
   plan: OperationPlan,

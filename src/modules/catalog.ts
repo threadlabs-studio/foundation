@@ -2,6 +2,7 @@ import type { ModuleDefinition } from '../domain/module.js';
 import { compareText } from '../domain/canonicalize.js';
 import { agentsModule } from './agents.js';
 import { browserModule } from './browser.js';
+import { codeDocumentationModule } from './code-documentation.js';
 import { BUILT_IN_BUNDLES } from './bundles.js';
 import { coreModule } from './core.js';
 import { crossPlatformModule } from './cross-platform.js';
@@ -20,6 +21,7 @@ export { TYPESCRIPT_LIBRARY_BUNDLE } from './bundles.js';
 const modules = [
   agentsModule,
   browserModule,
+  codeDocumentationModule,
   coreModule,
   crossPlatformModule,
   docsModule,
@@ -58,6 +60,13 @@ export interface ResolvedSelection {
   readonly modules: readonly ModuleDefinition[];
 }
 
+/**
+ * Computes a stable dependency-first module order, regardless of the caller's request order.
+ * The order is observable in adoption plans and locks, so dependencies are traversed in sorted
+ * order and conflicts are checked only after the complete closure is known.
+ *
+ * @docs module-resolution
+ */
 export function resolveSelection(selection: ModuleSelection): ResolvedSelection {
   const requested = new Set(selection.modules);
   for (const bundleId of selection.bundles) {

@@ -49,13 +49,14 @@ Local and GitHub mutations have separate plans and approvals. Package publicatio
 
 ## What the recommended bundle installs
 
-The `typescript-library` bundle composes core repository policy, strict ESM TypeScript on maintained Node LTS lines, stable CI, dependency freshness, coding-agent guidance, public package contracts, generated-artifact ownership, and safe npm release controls. Optional modules add browser, cross-platform, documentation-site, performance, or long-running verification only when those risks apply.
+The `typescript-library` bundle composes core repository policy, explanatory code-documentation obligations, strict ESM TypeScript on maintained Node LTS lines, stable CI, dependency freshness, coding-agent guidance, public package contracts, generated-artifact ownership, and safe npm release controls. Optional modules add browser, cross-platform, documentation-site, performance, or long-running verification only when those risks apply.
 
 The important distinction is not “strict” versus “relaxed.” It is:
 
 - fast deterministic checks belong in the inner and pull-request lanes;
 - costly or noisy checks move to extended or scheduled lanes;
 - package and provenance checks belong in the release lane;
+- semantic documentation is written and reviewed before its links become deterministic gates;
 - a control can be excepted only with a reason, owner, scope, and review date.
 
 See [the standard](docs/standard.md), [configuration](docs/configuration.md), [control economics](docs/controls.md), and [release flow](docs/release.md).

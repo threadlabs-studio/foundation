@@ -13,6 +13,7 @@ describe('built-in catalog', () => {
     expect(BUILT_IN_MODULE_IDS).toEqual([
       'agents',
       'browser',
+      'code-documentation',
       'core',
       'cross-platform',
       'docs',
@@ -51,6 +52,7 @@ describe('built-in catalog', () => {
     });
     expect(first.moduleIds).toEqual(second.moduleIds);
     expect(first.moduleIds).toContain('typescript-node');
+    expect(first.moduleIds).toContain('code-documentation');
     expect(first.moduleIds).not.toContain('cross-platform');
     expect(first.moduleIds).not.toContain('performance');
     expect(first.moduleIds).not.toContain('browser');
@@ -122,6 +124,14 @@ describe('built-in catalog', () => {
     });
     expect(guide).toContain('Do not add Prettier');
     expect(guide).toContain('Do not add Tailwind');
+    expect(guide).toContain('Explain invariants');
+    expect(guide).toContain('Do not add blanket JSDoc');
+    expect(guide).toContain('independent fresh-process runs of the complete benchmark set');
+    expect(guide).toContain(
+      'classify and shelve it as inconclusive for a quieter rerun; do not reject it',
+    );
+    expect(guide).toContain('Do not invent a minimum improvement threshold');
+    expect(guide).toContain('no benchmark regressions and no significant code or size growth');
 
     const claudeGuide = renderTemplate('agents/claude', {
       projectName: 'example-library',
@@ -129,5 +139,25 @@ describe('built-in catalog', () => {
       licenseHolder: 'Example Authors',
     });
     expect(claudeGuide).toBe('@AGENTS.md\n');
+  });
+
+  it('installs a substantive code-documentation standard without blanket JSDoc', () => {
+    const module = getBuiltInModule('code-documentation');
+    expect(module.artifacts.map(({ path }) => path)).toEqual([
+      'docs/code-documentation-standard.md',
+    ]);
+
+    const standard = renderTemplate('code-documentation/standard', {
+      projectName: 'example-library',
+      description: 'A synthetic project.',
+      licenseHolder: 'Example Authors',
+    });
+    expect(standard).toMatch(/invariants/iu);
+    expect(standard).toMatch(/platform boundaries/iu);
+    expect(standard).toMatch(/performance tradeoffs/iu);
+    expect(standard).toContain('Do not require JSDoc on every declaration');
+    expect(standard).toContain('Semantic quality remains a human review judgment');
+    expect(standard).toContain('threadlabs audit . --json');
+    expect(standard).toMatch(/separate required check/iu);
   });
 });

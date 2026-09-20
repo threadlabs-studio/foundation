@@ -11,6 +11,7 @@
   "bundles": ["typescript-library"],
   "modules": [],
   "exceptions": [],
+  "documentation": { "hotspots": [] },
   "freshness": {
     "holds": [
       {
@@ -38,9 +39,13 @@ The guided `init`, `--config`, and explicit `--bundle`/`--module` paths produce 
 
 ## Modules
 
-The recommended `typescript-library` bundle contains `core`, `typescript-node`, `github`, `freshness`, `agents`, `public-api`, `generated-artifacts`, and `npm-publish`. The `agents` module generates the canonical root `AGENTS.md` plus a thin `CLAUDE.md` import so Codex and Claude receive one consistent repository contract.
+The recommended `typescript-library` bundle contains `core`, `code-documentation`, `typescript-node`, `github`, `freshness`, `agents`, `public-api`, `generated-artifacts`, and `npm-publish`. The `agents` module generates the canonical root `AGENTS.md` plus a thin `CLAUDE.md` import so Codex and Claude receive one consistent repository contract.
 
 Optional modules are `browser`, `cross-platform`, `docs`, `performance`, and `long-running`. The built-in catalog uses the same versioned declarative contract exposed for experimental third-party catalogs; external modules declare data and templates and do not execute package code in the maintainer process.
+
+`documentation.hotspots` is the local map for explanations that have already been written and reviewed. Each entry has a stable ID, source path, symbol, one or more dimensions (`invariant`, `algorithm`, `platform-boundary`, `performance`, `security`, `lifecycle`, or `rationale`), a Markdown path plus heading anchor, and at least one evidence-test path. The source carries `@docs <id>`; the linked section carries a subsection for each declared dimension plus `Verification`. An empty map is valid for a genuinely simple new repository. Do not add speculative entries as placeholders.
+
+Run `threadlabs audit . --json` after adopting entries; a broken hotspot produces a findings exit. CI may use the audit as a separate required check, but it must stay outside package scripts executed by `threadlabs verify` to avoid recursive verification.
 
 Use `threadlabs explain` to list modules and `threadlabs explain <module>` to inspect its controls, applicability, lane, cost, dependencies, artifacts, and stages.
 

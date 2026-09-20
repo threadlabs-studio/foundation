@@ -65,6 +65,7 @@ export function initCommand(options: CommandOptions): CommandResult {
       modules,
       exceptions: [],
       ownership: [],
+      documentation: { hotspots: [] },
       ...(usesTypescript
         ? {
             freshness: {
