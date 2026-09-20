@@ -8,6 +8,7 @@ import { inferModules } from './applicability.js';
 import { observationFromExternal } from './observe.js';
 import { buildAuditStages, type AuditStage } from './stages.js';
 import { releaseArtifacts } from './release.js';
+import { auditCodeDocumentation } from './code-documentation.js';
 import { ownedContentDigest } from './sections.js';
 
 export interface AuditOptions {
@@ -207,6 +208,10 @@ export function auditSnapshot(
         }
       }
     }
+  }
+
+  if (selectedModules.includes('code-documentation')) {
+    findings.push(...auditCodeDocumentation(snapshot, options.config?.documentation));
   }
 
   for (const observation of observations) {

@@ -6,6 +6,7 @@ export const TYPESCRIPT_LIBRARY_BUNDLE: ModuleBundle = {
   description: 'Recommended first-green baseline for a public TypeScript package.',
   modules: [
     'core',
+    'code-documentation',
     'typescript-node',
     'github',
     'freshness',

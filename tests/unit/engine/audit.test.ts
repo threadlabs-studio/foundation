@@ -143,4 +143,46 @@ describe('audit engine', () => {
       expect.objectContaining({ title: 'README.md matches', state: 'conformant' }),
     );
   });
+
+  it('audits declared documentation hotspots when the module is selected', () => {
+    const report = auditSnapshot(
+      {
+        files: new Map([
+          ['docs/code-documentation-standard.md', 'Managed standard\n'],
+          ['src/queue.ts', '/** @docs queue-ordering */\nexport function drainQueue() {}\n'],
+          [
+            'docs/architecture.md',
+            '## Queue ordering\n\n### Invariant\nStable.\n\n### Verification\nCovered.\n',
+          ],
+          ['tests/queue.test.ts', 'export {};\n'],
+        ]),
+        symlinks: [],
+        caseCollisions: [],
+      },
+      {
+        config: {
+          ...makeConfig(['code-documentation']),
+          ownership: [
+            { path: 'docs/code-documentation-standard.md', mode: 'local' as const },
+          ],
+          documentation: {
+            hotspots: [
+              {
+                id: 'queue-ordering',
+                source: 'src/queue.ts',
+                symbol: 'drainQueue',
+                dimensions: ['invariant'],
+                documentation: 'docs/architecture.md#queue-ordering',
+                tests: ['tests/queue.test.ts'],
+              },
+            ],
+          },
+        },
+      },
+    );
+
+    expect(report.findings).toContainEqual(
+      expect.objectContaining({ controlId: 'code-documentation.baseline', state: 'conformant' }),
+    );
+  });
 });

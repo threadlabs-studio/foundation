@@ -8,5 +8,6 @@ export function makeConfig(modules: readonly string[] = ['core']): ThreadlabsCon
     modules,
     exceptions: [],
     ownership: [],
+    documentation: { hotspots: [] },
   };
 }

@@ -69,6 +69,7 @@ describe('Foundation dogfood', () => {
         'package.json',
         'AGENTS.md',
         'CLAUDE.md',
+        'docs/code-documentation-standard.md',
         '.github/workflows/ci.yml',
         '.github/workflows/release.yml',
         '.github/dependabot.yml',

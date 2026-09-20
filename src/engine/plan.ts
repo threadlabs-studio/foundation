@@ -31,6 +31,13 @@ function normalizedConfig(
   };
 }
 
+/**
+ * Produces an immutable preview without touching the target repository. Every write is bound to
+ * both its expected preimage and postcondition; the manifest, lock, and physical repository are
+ * bound separately so approval cannot be replayed against a different checkout or policy state.
+ *
+ * @docs plan-construction
+ */
 export function createOperationPlan(
   root: string,
   config: ThreadlabsConfig,

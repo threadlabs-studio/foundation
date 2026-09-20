@@ -43,3 +43,13 @@ An exception is not a vague “skip.” It names a control, rationale, owner, sc
 ## Agent-driven development
 
 Every managed repository has a concise root `AGENTS.md` that points to authoritative requirements, safe/destructive boundaries, applicable verification, generated-file hazards, completion evidence, and the owner-decision route. A root `CLAUDE.md` imports and routes Claude to the same contract. Tool-specific files must not compete with `AGENTS.md`. Temporary plans, branch state, measurements, and handoff notes do not belong in durable instructions.
+
+## Explanatory code documentation
+
+Code documentation preserves reasoning that names, types, and tests do not make obvious: invariants, algorithms, platform boundaries, performance and security tradeoffs, lifecycle ownership, and rejected alternatives. A short source comment should prevent a local misread; a checked-in design section should carry reasoning that spans symbols, delivery modes, or evidence.
+
+Foundation does not use blanket JSDoc, comment coverage, minimum word counts, or vocabulary scoring. Those controls reward boilerplate and cannot prove that a comment is true or useful. Public API comments describe observable contracts where needed; internal comments explain hidden constraints where needed. Simple code may need neither.
+
+After a repository has written and reviewed a hotspot explanation, it records the source symbol, required documentation dimensions, anchored design section, and evidence tests under `documentation.hotspots`. The `code-documentation` module then checks only objective link integrity. Human review continues to own semantic quality and selection of new hotspots.
+
+`threadlabs audit . --json` is the deterministic gate and may run as a separate required CI check. It must not be nested in a package script that `threadlabs verify` invokes, because self-verification recursion adds no evidence.

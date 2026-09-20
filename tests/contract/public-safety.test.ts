@@ -10,7 +10,7 @@ const thisFile = 'tests/contract/public-safety.test.ts';
 
 function publicTextFiles(directory = root): readonly string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    if (entry.isDirectory() && ignoredDirectories.has(entry.name)) return [];
+    if (ignoredDirectories.has(entry.name)) return [];
     const absolute = join(directory, entry.name);
     if (entry.isDirectory()) return publicTextFiles(absolute);
     const path = relative(root, absolute).split('\\').join('/');

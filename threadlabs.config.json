@@ -2,6 +2,68 @@
   "bundles": [
     "typescript-library"
   ],
+  "documentation": {
+    "hotspots": [
+      {
+        "dimensions": [
+          "platform-boundary",
+          "security",
+          "lifecycle",
+          "rationale"
+        ],
+        "documentation": "docs/architecture.md#bounded-command-execution",
+        "id": "bounded-command-execution",
+        "source": "src/adapters/command-runner.ts",
+        "symbol": "runBoundedCommand",
+        "tests": [
+          "tests/integration/verify.test.ts"
+        ]
+      },
+      {
+        "dimensions": [
+          "invariant",
+          "algorithm",
+          "rationale"
+        ],
+        "documentation": "docs/architecture.md#module-resolution",
+        "id": "module-resolution",
+        "source": "src/modules/catalog.ts",
+        "symbol": "resolveSelection",
+        "tests": [
+          "tests/unit/modules/catalog.test.ts"
+        ]
+      },
+      {
+        "dimensions": [
+          "invariant",
+          "lifecycle",
+          "security"
+        ],
+        "documentation": "docs/architecture.md#operation-application",
+        "id": "operation-application",
+        "source": "src/engine/apply.ts",
+        "symbol": "applyOperationPlan",
+        "tests": [
+          "tests/unit/engine/apply.test.ts",
+          "tests/integration/apply-resume.test.ts"
+        ]
+      },
+      {
+        "dimensions": [
+          "invariant",
+          "security",
+          "rationale"
+        ],
+        "documentation": "docs/architecture.md#plan-construction",
+        "id": "plan-construction",
+        "source": "src/engine/plan.ts",
+        "symbol": "createOperationPlan",
+        "tests": [
+          "tests/unit/engine/plan.test.ts"
+        ]
+      }
+    ]
+  },
   "exceptions": [],
   "freshness": {
     "holds": [
@@ -100,6 +162,10 @@
     {
       "mode": "managed",
       "path": "LICENSE"
+    },
+    {
+      "mode": "managed",
+      "path": "docs/code-documentation-standard.md"
     },
     {
       "mode": "managed",

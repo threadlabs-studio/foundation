@@ -111,6 +111,58 @@ describe('manifest contract', () => {
       ]),
     );
   });
+
+  it('validates documentation hotspots as explicit semantic obligations', () => {
+    expect(
+      validateConfig({
+        ...minimalConfig,
+        documentation: {
+          hotspots: [
+            {
+              id: 'operation-apply',
+              source: 'src/engine/apply.ts',
+              symbol: 'applyOperationPlan',
+              dimensions: ['invariant', 'algorithm', 'platform-boundary', 'rationale'],
+              documentation: 'docs/architecture.md#operation-application',
+              tests: ['tests/unit/engine/apply.test.ts'],
+            },
+          ],
+        },
+      }),
+    ).toEqual([]);
+
+    const issues = validateConfig({
+      ...minimalConfig,
+      documentation: {
+        hotspots: [
+          {
+            id: 'same',
+            source: '../escape.ts',
+            symbol: '',
+            dimensions: ['everything'],
+            documentation: 'docs/architecture.md',
+            tests: [],
+          },
+          {
+            id: 'same',
+            source: 'src/index.ts',
+            symbol: 'hello',
+            dimensions: [],
+            documentation: 'docs/architecture.md#hello',
+            tests: ['tests/index.test.ts'],
+          },
+        ],
+      },
+    });
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'duplicate_id' }),
+        expect.objectContaining({ code: 'invalid_path' }),
+        expect.objectContaining({ code: 'required' }),
+        expect.objectContaining({ code: 'invalid_type' }),
+      ]),
+    );
+  });
 });
 
 describe('managed paths', () => {

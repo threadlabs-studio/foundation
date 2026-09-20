@@ -33,6 +33,13 @@ function truncateUtf8(value: string, maxBytes: number): string {
   return bytes.byteLength <= maxBytes ? value : bytes.subarray(0, maxBytes).toString('utf8');
 }
 
+/**
+ * Crosses the process boundary with a fixed executable allowlist, no shell, a minimal environment,
+ * bounded output, and a deadline. A timeout is reported as unknown—not failed—because it proves
+ * that evidence was unavailable, not that the command's underlying contract is false.
+ *
+ * @docs bounded-command-execution
+ */
 export function runBoundedCommand(
   executable: string,
   arguments_: readonly string[],

@@ -5,7 +5,7 @@ export function inferModules(snapshot: RepositorySnapshot): readonly string[] {
   const hasTypeScript =
     snapshot.files.has('tsconfig.json') ||
     (packageJson !== undefined && /["']typescript["']/u.test(packageJson));
-  const modules = new Set(['core', 'agents']);
+  const modules = new Set(['core', 'agents', 'code-documentation']);
   if (hasTypeScript || snapshot.files.size === 0) {
     [
       'typescript-node',
