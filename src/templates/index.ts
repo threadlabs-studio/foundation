@@ -74,7 +74,7 @@ corepack pnpm verify:pr
   },
   "files": ["dist"],
   "engines": { "node": ">=22.13 <23 || >=24 <25" },
-  "packageManager": "pnpm@11.25.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "clean": "node --input-type=module --eval \\\"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\\\"",
     "build": "pnpm clean && tsc -p tsconfig.build.json",

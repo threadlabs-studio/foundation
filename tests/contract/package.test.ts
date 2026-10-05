@@ -77,7 +77,7 @@ describe('public package contract', () => {
     expect(sourceManifest.devEngines).toEqual({
       runtime: { name: 'node', version: '>=24 <25', onFail: 'warn' },
     });
-    expect(sourceManifest.packageManager).toBe('pnpm@11.25.0');
+    expect(sourceManifest.packageManager).toBe('pnpm@12.9.1');
     expect(sourceManifest.scripts?.lint).toBe('oxlint --deny-warnings .');
     expect(sourceManifest.dependencies).toEqual({
       '@inquirer/prompts': '8.7.1',
@@ -93,7 +93,7 @@ describe('public package contract', () => {
 
     const packOutput = execFileSync(
       'corepack',
-      ['pnpm@11.25.0', 'pack', '--pack-destination', packDirectory],
+      ['pnpm@12.9.1', 'pack', '--pack-destination', packDirectory],
       { cwd: repositoryRoot, encoding: 'utf8', shell: useCommandShell },
     );
     const tarballName = packOutput.trim().split('\n').at(-1);
