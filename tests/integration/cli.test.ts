@@ -57,6 +57,9 @@ describe('CLI lifecycle', () => {
     expect(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).name).toBe(
       'sample-library',
     );
+    expect(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).packageManager).toBe(
+      'pnpm@12.9.1',
+    );
 
     const audit = invoke(['audit', root, '--json']);
     expect(audit.exit).toBe(0);

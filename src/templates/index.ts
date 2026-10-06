@@ -74,7 +74,7 @@ corepack pnpm verify:pr
   },
   "files": ["dist"],
   "engines": { "node": ">=22.13 <23 || >=24 <25" },
-  "packageManager": "pnpm@11.25.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "clean": "node --input-type=module --eval \\\"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\\\"",
     "build": "pnpm clean && tsc -p tsconfig.build.json",
@@ -241,7 +241,7 @@ jobs:
           node-version: \${{ matrix.node }}
           package-manager-cache: false
       # Corepack owns the pnpm/Yarn shims; --force replaces runner-provided shims in this ephemeral job.
-      - run: npm install --global --ignore-scripts --force corepack@0.34.0
+      - run: npm install --global --ignore-scripts --force corepack@0.34.7
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:pr
@@ -304,7 +304,7 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       # Corepack owns the pnpm/Yarn shims; --force replaces runner-provided shims in this ephemeral job.
-      - run: npm install --global --ignore-scripts --force corepack@0.34.0
+      - run: npm install --global --ignore-scripts --force corepack@0.34.7
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:release
@@ -337,7 +337,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       # Corepack owns the pnpm/Yarn shims; --force replaces runner-provided shims in this ephemeral job.
-      - run: npm install --global --ignore-scripts --force corepack@0.34.0
+      - run: npm install --global --ignore-scripts --force corepack@0.34.7
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:extended
