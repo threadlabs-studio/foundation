@@ -55,7 +55,8 @@ function repository(): string {
 }
 
 describe('release runner', () => {
-  it('skips a package npm has never seen, naming the trusted publisher to add, and publishes the others', () => {
+  // The release job runs on Linux, and Windows spawns no extensionless stand-in without a shell.
+  it.skipIf(process.platform === 'win32')('skips a package npm has never seen, naming the trusted publisher to add, and publishes the others', () => {
     const root = repository();
     const calls = join(root, 'calls.log');
     const result = spawnSync(process.execPath, ['scripts/release.mjs'], {
