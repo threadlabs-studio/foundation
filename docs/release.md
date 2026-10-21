@@ -30,4 +30,6 @@ Publication exists only in `.github/workflows/release.yml`. A maintainer manuall
 
 For each immutable `name@version`, the generated release runner computes the reviewed pack integrity and observes npm before publishing. If the version exists with the same integrity, it skips publication. A different integrity is a hard conflict. Missing or failed registry evidence blocks rather than guesses. Source releases are observed separately, so a registry success followed by a source-host timeout can resume by creating only the missing source release.
 
+Trusted publishing is configured on an existing npm package, so a package name npm has never seen is published by hand once. The release runner skips such a package, with no source release, and prints the steps: publish it from a clean checkout of the released commit, then add the repository, the workflow file and the `npm` environment as its trusted publisher on npmjs.com. The run continues with the other packages and succeeds, and the next run publishes the package or confirms the copy published by hand by its integrity.
+
 Tags and source releases are traceable to the reviewed workflow state. Publication, visibility changes, credential consent, and ambiguous overwrite decisions remain human-only.
