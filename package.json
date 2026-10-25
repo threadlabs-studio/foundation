@@ -32,7 +32,7 @@
     "templates"
   ],
   "engines": {
-    "node": ">=22.13 <23 || >=24 <25"
+    "node": ">=22.13 <23 || >=24"
   },
   "devEngines": {
     "runtime": {

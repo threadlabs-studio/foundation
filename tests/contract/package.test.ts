@@ -186,7 +186,7 @@ describe('public package contract', () => {
     };
     expect(installedManifest.exports).toBeDefined();
     expect(installedManifest.bin).toEqual({ threadlabs: './dist/cli.js' });
-    expect(installedManifest.engines).toEqual({ node: '>=22.13 <23 || >=24 <25' });
+    expect(installedManifest.engines).toEqual({ node: '>=22.13 <23 || >=24' });
     expect(installedManifest.files).toEqual(['dist', 'schemas', 'templates']);
     expect(installedManifest.dependencies).toEqual({
       '@inquirer/prompts': '8.7.1',

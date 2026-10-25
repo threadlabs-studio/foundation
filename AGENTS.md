@@ -11,6 +11,7 @@
 ## Safe work
 
 - Preserve unrelated work and never rewrite shared Git history without explicit approval.
+- Do not credit ChatGPT, Claude, or other AI identities as authors, co-authors, or contributors in Threadlabs public repositories. Preserve truthful human attribution.
 - Audit and preview before applying Foundation changes. Apply only a reviewed plan with its exact digest.
 - Check `threadlabs.config.json` for each path's ownership mode before editing. For managed paths, use `.threadlabs.lock.json` to confirm the last-applied content and change the owning Foundation template; purpose-built local paths may be edited directly, and ambiguous ownership blocks change.
 - Never put credentials, machine-local paths, private provenance, or private project examples in this public repository.

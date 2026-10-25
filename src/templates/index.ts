@@ -73,7 +73,7 @@ corepack pnpm verify:pr
     }
   },
   "files": ["dist"],
-  "engines": { "node": ">=22.13 <23 || >=24 <25" },
+  "engines": { "node": ">=22.13 <23 || >=24" },
   "packageManager": "pnpm@11.25.0",
   "scripts": {
     "clean": "node --input-type=module --eval \\\"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\\\"",
@@ -353,6 +353,7 @@ jobs:
 ## Safe work
 
 - Preserve unrelated changes and never rewrite shared Git history without explicit approval.
+- In Threadlabs public repositories, do not credit ChatGPT, Claude, or other AI identities as authors, co-authors, or contributors. Preserve truthful human attribution.
 - Preview Foundation plans before applying them.
 - Check threadlabs.config.json for each path's ownership mode before editing. For managed paths, use .threadlabs.lock.json to confirm the last-applied content and change the owning Foundation template; preserve local paths and stop on ambiguous ownership.
 - Use Oxlint for JavaScript and TypeScript linting. Do not add Prettier or another repository-wide formatter.
