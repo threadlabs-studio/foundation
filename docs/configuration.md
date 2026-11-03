@@ -49,6 +49,21 @@ Run `threadlabs audit . --json` after adopting entries; a broken hotspot produce
 
 Use `threadlabs explain` to list modules and `threadlabs explain <module>` to inspect its controls, applicability, lane, cost, dependencies, artifacts, and stages.
 
+## Organization CI runners
+
+Generated CI workflows accept the optional GitHub Actions variable
+`CI_RUNNER_LABELS`, containing a JSON array of runner labels. Set it at repository
+or organization scope after granting those repositories access to the runner
+group. Without the variable, jobs retain their GitHub-hosted runner selection.
+Pull requests from external forks always retain GitHub-hosted execution.
+Cross-platform verification applies the variable only to its Ubuntu jobs;
+Windows and macOS retain their own runners. Publication workflows retain their
+existing protected GitHub-hosted environment.
+
+Self-hosted execution requires an independently secured runner environment.
+Use disposable job environments and preserve repository and fork approval
+controls when enabling the variable.
+
 ## Ownership
 
 Each entry has a portable repository-relative `path` and one mode:
